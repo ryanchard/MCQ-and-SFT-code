@@ -19,22 +19,21 @@ else:
     print("Error:", response.status_code, response.text)
     exit(1)
 
-#running = status['running']
-#for run in running:
-    # print(run)
+# print(status)
 
 def get_models(status, status1, status2):
     models = status[status1]
     model_list = []
     for model in models:
-        model_list += model['Models Served'].split(',')
-        if model['Model Status'] != status2:
-            print(f'SURPRISE: Expected {status2} but got {model["Model Status"]} in {model}')
+        if model['Model Status'] == status2:
+            model_list += model['Models Served'].split(',')
     return model_list
 
 models_running = get_models(status, 'running', 'running')
 print(f'Running: {models_running}')
 
+models_starting = get_models(status, 'running', 'starting')
+print(f'Starting: {models_starting}')
+
 models_queued = get_models(status, 'queued', 'starting')
 print(f'Queued : {models_queued}')
-
