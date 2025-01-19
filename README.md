@@ -34,4 +34,5 @@ For example, the following generates MCQs for each PDF in directory PDFs, creati
 ```
 python generate_qa_or_mc.py -i PDFs -o my_output
 ```
-
+Notes:
+* You need a file `openai_access_token.txt` that contains your OpenAI access token
