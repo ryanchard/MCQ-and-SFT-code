@@ -50,7 +50,7 @@ python combine_json_files.py -i <directory-containing-jsons> -o all_json.json
 (The program `extract_qa.py` creates a file that contains only "question" and "answer" fields. Not sure if we need that.)
 
 ## `select_mcqs_at_random_from_json.py`: Select *N* MCQs at random
-For example the following selects 200 at random and puts them in a file `200.json`.
+Having generated a few thousand MCQs, you may not want to process them all. Thus for example the following call selects 200 MCQs at random from the specified file (here, `all_json.json`) and puts them in a file `200.json`.
 ```
 python select_mcqs_at_random_from_json.py -i all_json.json -o 200.json -n 200
 ```
