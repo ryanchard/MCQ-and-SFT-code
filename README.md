@@ -1,5 +1,12 @@
 # Code for generating QA pairs and MCQs from PDFs, etc.
 
+This repository provides access to programs for:
+* preparing question-answer pairs (QA) or multiple-choice questions (MCQ) from PDF documents
+* applying various LLMs hosted on the ALCF inference service to MCQs, and scoring their results
+* ...
+
+The programs were written by Rick Stevens and adapted for large-scale use at ALCF by Ian Foster.
+
 ## Generate QA pairs or MCQs from PDFs
 
 The program `generate_qa_or_mc.py` calls an LLM (currently GPT4o) to generate either question-answer pairs (QA) or multiple-choice questions (MCQ) from a set of PDFs. Options are as follows:
@@ -20,6 +27,31 @@ python generate_qa_or_mc.py -i PDFs -o my_output
 ```
 Notes:
 * You need a file `openai_access_token.txt` that contains your OpenAI access token.
+
+## Generate and Grade Answers with an LLM
+
+This program uses a specified LLM A to generate answers for a supplied set of MCQs and evaluates the generated answers with a specified LLM B.
+```
+options:
+  -h, --help            show this help message and exit
+  -i INPUT, --input INPUT
+                        Input file
+  -a MODELA, --modelA MODELA
+                        modelA
+  -b MODELB, --modelB MODELB
+                        modelB
+  -q, --quiet           Do not show details
+  -c, --csv             Generate CSV summary
+  -s START, --start START
+                        Number to start at in file
+  -e END, --end END     End number in file
+  -o OUTPUT, --output OUTPUT
+                        Output directory
+```
+For example, the following program reads MCQs from `my_inputs.json`, generates answers with model `meta-llama/Meta-Llama-3.1-405B-Instruct`, and writes outputs directory `my_outputs`. The flag `-c` asks for periodic summary CSVs and the flag `-q` means "quiet", i.e., do not print answers as generated.
+```
+python generate_and_grade_answers.py -i my_qa_file.json -o my_outputs -a 'meta-llama/Meta-Llama-3.1-405B-Instruct' -b 'gpt-4o' -c -q
+```
 
 
 ## Administrative aids
