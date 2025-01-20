@@ -35,7 +35,7 @@ This program uses a specified LLM A to generate answers for a supplied set of MC
 options:
   -h, --help            show this help message and exit
   -i INPUT, --input INPUT
-                        Input file
+                        MCQ input file
   -a MODELA, --modelA MODELA
                         modelA
   -b MODELB, --modelB MODELB
@@ -43,8 +43,8 @@ options:
   -q, --quiet           Do not show details
   -c, --csv             Generate CSV summary
   -s START, --start START
-                        Number to start at in file
-  -e END, --end END     End number in file
+                        MCQ number to start at in file (default 0)
+  -e END, --end END     MCQ end number in file (default all)
   -o OUTPUT, --output OUTPUT
                         Output directory
 ```
@@ -52,6 +52,11 @@ For example, the following program reads MCQs from `my_inputs.json`, generates a
 ```
 python generate_and_grade_answers.py -i my_qa_file.json -o my_outputs -a 'meta-llama/Meta-Llama-3.1-405B-Instruct' -b 'gpt-4o' -c -q
 ```
+As running this program can take a while, you can request to process just the MCQs from number `<start>` to number `<end>`. E.g., the following will process just the first 100:
+```
+python generate_and_grade_answers.py -i my_qa_file.json -o my_outputs -a 'meta-llama/Meta-Llama-3.1-405B-Instruct' -b 'gpt-4o' -c -q -e 100
+```
+Answers are stored in a file in the specified outputs directory, named `<modelA>:<modelB>_<start>_<end>.json`, with any "/" in `<modelA>` replaced with a "+." The `<start>` and `<end>` are as just described, so for example, the preceding call would generate a file `meta-llama+Meta-Llama-3.1-405B-Instruct:gpt-4o_0_100.json`. 
 
 
 ## Administrative aids
