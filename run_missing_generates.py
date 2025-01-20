@@ -29,13 +29,14 @@ alcf_chat_models = status['clusters']['sophia']['frameworks']['vllm']['models']
 def parse_existing_ranges(folder, model_a, model_b):
     # Replace '/' with '+' in model_a for filename compatibility
     model_a_safe = model_a.replace('/', '+')
+    model_b_safe = model_b.replace('/', '+')
 
     # Collect existing ranges from filenames
     existing_ranges = []
     if not os.path.exists(folder): os.makedirs(folder)
     for filename in os.listdir(folder):
         parts = filename.split('_')
-        if parts[1] != f'{model_a_safe}:{model_b}':
+        if parts[1] != f'{model_a_safe}:{model_b_safe}':
             continue
         
         start = int(parts[2])
@@ -77,7 +78,7 @@ def generate_commands(inputs, folder, model_a, model_b, total_range, batch_size)
         while current < end and current < total_range[1]:
             batch_end = min((current + batch_size)-(current + batch_size)%batch_size, end)
             commands.append(
-                f"python generate_and_grade_answers.py -i {inputs} -a '{model_a}' -b '{model_b}' -c -q -s {current} -e {batch_end}"
+                f"python generate_and_grade_answers.py -i {inputs} -o {folder} -a '{model_a}' -b '{model_b}' -c -q -s {current} -e {batch_end}"
             )
             current = batch_end
 
@@ -182,7 +183,7 @@ def main():
             if model_a not in alcf_chat_models:
                 print(f'Skipping {model_a} as not a chat model')
                 continue
-            run_requested(inputs,folder, model_a, model_b, total_range, batch_size, execute)
+            run_requested(inputs, folder, model_a, model_b, total_range, batch_size, execute)
         if args.queued:
             print(f'Also trying {queued_model_list}, currently queued at ALCF\n')
             for model_a in queued_model_list:
@@ -198,13 +199,13 @@ def main():
                 run_requested(inputs, folder, model_a, model_b, total_range, batch_size, execute)
     else:
         if model_a in running_model_list:
-            run_requested(inputs,folder, model_a, model_b, total_range, batch_size, execute)
+            run_requested(inputs, folder, model_a, model_b, total_range, batch_size, execute)
         elif args.queued and model_a in queued_model_list:
             print(f'Requesting {model_a}, which is currently queued')
             run_requested(inputs,folder, model_a, model_b, total_range, batch_size, execute)
         elif args.start and model_a in alcf_chat_models:
             print(f'Requesting {model_a} start')
-            run_requested(inputs,folder, model_a, model_b, total_range, batch_size, execute)
+            run_requested(inputs, folder, model_a, model_b, total_range, batch_size, execute)
         else:
             print(f'Model {model_a} is not not known')
             exit(1)

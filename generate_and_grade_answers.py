@@ -141,6 +141,7 @@ def get_model_parameters(model):
         exit(1)
     return (model, key, endpoint)
 
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Program to use LLM B to rate answers provided by LLM A') 
@@ -151,7 +152,7 @@ def main():
     parser.add_argument('-c','--csv', help='Generate CSV summary', action='store_true', default=False)
     parser.add_argument('-s','--start', help='Number to start at in QA file', default='0')
     parser.add_argument('-e','--end', help='End number in QA file', default='all')
-    parser.add_argument('-o','--output', help='Output directory', default='output_files')
+    parser.add_argument('-o','--output', help='Output directory', required=True)
     args = parser.parse_args()
 
     json_file = args.input
