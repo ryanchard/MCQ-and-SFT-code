@@ -28,6 +28,9 @@ import openai
 from openai import OpenAI
 import time
 
+from alcf_inference_utilities import get_names_of_alcf_chat_models
+
+
 # ---------------------------------------------------------------------
 # Configuration constants for TWO different models/endpoints/API keys
 # ---------------------------------------------------------------------
@@ -39,23 +42,7 @@ with open('alcf_access_token.txt', 'r') as file:
 with open('openai_access_token.txt', 'r') as file:
     openai_access_token = file.read().strip()
 
-# Define the URL and headers for ALCF Inference Service list-endpoints
-url = "https://data-portal-dev.cels.anl.gov/resource_server/list-endpoints"
-headers = {
-    "Authorization": f"Bearer {alcf_access_token}"
-}
-
-# Make the GET request
-response = requests.get(url, headers=headers)
-
-# Check the response
-if response.status_code == 200:
-    status = response.json()
-else:
-    print("Error:", response.status_code, response.text)
-    exit(1)
-
-alcf_chat_models = status['clusters']['sophia']['frameworks']['vllm']['models']
+alcf_chat_models = get_names_of_alcf_chat_models(alcf_access_token)
 
 
 # ---------------------------------------------------------------------

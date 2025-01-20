@@ -1,6 +1,6 @@
 import requests
 
-def get_names_of_alcf_chat_models():
+def get_names_of_alcf_chat_models(alcf_access_token):
     # Define the URL and headers for ALCF Inference Service list-endpoints
     url = "https://data-portal-dev.cels.anl.gov/resource_server/list-endpoints"
     headers = {

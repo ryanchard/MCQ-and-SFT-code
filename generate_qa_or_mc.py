@@ -10,6 +10,8 @@ import spacy
 from openai import OpenAI
 import tiktoken
 
+from alcf_inference_utilities import get_names_of_alcf_chat_models
+
 ##############################################################################
 # Explicit API settings
 ##############################################################################
@@ -24,37 +26,13 @@ with open('alcf_access_token.txt', 'r') as file:
 with open('openai_access_token.txt', 'r') as file:
     openai_access_token = file.read().strip()
 
+alcf_chat_models = get_names_of_alcf_chat_models(alcf_access_token)
 
 ##############################################################################
 # Global constants
 ##############################################################################
 CHUNK_SIZE = 1000  # approximate number of words per chunk
 
-models = alcf_inference_utilities.get_alcf_chat_models()
-
-print(models)
-
-exit()
-
-alcf_chat_models = ['Qwen/Qwen2.5-14B-Instruct',
-                    'Qwen/Qwen2.5-7B-Instruct',
-                    'Qwen/QwQ-32B-Preview',
-                    # Meta Llama Family
-                    'meta-llama/Meta-Llama-3-70B-Instruct',
-                    'meta-llama/Meta-Llama-3-8B-Instruct',
-                    'meta-llama/Meta-Llama-3.1-70B-Instruct',
-                    'meta-llama/Meta-Llama-3.1-8B-Instruct',
-                    'meta-llama/Meta-Llama-3.1-405B-Instruct',
-                    'meta-llama/Llama-3.3-70B-Instruct',
-                    # Mistral Family
-                    'mistralai/Mistral-7B-Instruct-v0.3',
-                    'mistralai/Mistral-Large-Instruct-2407',
-                    'mistralai/Mixtral-8x22B-Instruct-v0.1',
-                    # Nvidia Nemotron Family
-                    'mgoin/Nemotron-4-340B-Instruct-hf',
-                    # Aurora GPT Family
-                    'auroragpt/auroragpt-0.1-chkpt-7B-Base'
-                    ]
 
 def human_readable_time(seconds: float) -> str:
     """
