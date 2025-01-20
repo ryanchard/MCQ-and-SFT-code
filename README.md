@@ -8,6 +8,8 @@ This repository provides access to programs as follows:
 
 The original programs were written by Rick Stevens and then adapted for large-scale use at ALCF by Ian Foster.
 
+Please email foster@uchicago.edu if you see things that are unclear or missing.
+
 ## Generate QA pairs or MCQs from PDFs
 
 The program `generate_qa_or_mc.py` calls an LLM (currently GPT4o) to generate either question-answer pairs (QA) or multiple-choice questions (MCQ) from a set of PDFs. Options are as follows:
