@@ -221,7 +221,7 @@ def main():
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    output_file = f'out_{args.modelA.replace("/","+")}:{args.modelB}_{args.start}_{args.end}.json'
+    output_file = f'out_{args.modelA.replace("/","+")}:{args.modelB.replace("/","+")}_{args.start}_{args.end}.json'
     with open(output_dir+'/'+output_file, 'w', encoding='utf-8') as out_f:
         json.dump(qa_pairs, out_f, ensure_ascii=False, indent=2)
 

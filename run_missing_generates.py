@@ -27,16 +27,13 @@ else:
 alcf_chat_models = status['clusters']['sophia']['frameworks']['vllm']['models']
 
 def parse_existing_ranges(folder, model_a, model_b):
-    # Replace '/' with '+' in model_a for filename compatibility
-    model_a_safe = model_a.replace('/', '+')
-    model_b_safe = model_b.replace('/', '+')
-
     # Collect existing ranges from filenames
     existing_ranges = []
     if not os.path.exists(folder): os.makedirs(folder)
     for filename in os.listdir(folder):
         parts = filename.split('_')
-        if parts[1] != f'{model_a_safe}:{model_b_safe}':
+        # Replace '/' with '+' in model names for filename compatibility
+        if parts[1] != f'{model_a.replace("/","+")}:{model_b.replace("/","+")}':
             continue
         
         start = int(parts[2])
@@ -141,6 +138,7 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description='Program to run LLM B to rate answers provided by LLM A')
     parser.add_argument('-a','--modelA', help='modelA', required=True)
+    parser.add_argument('-b','--modelB', help='modelB', default='gpt-4o')
     parser.add_argument('-o','--outputdir', help='Directory to look for run results', required=True)
     parser.add_argument('-i','--inputfile', help='File to look for inputs', required=True)
     parser.add_argument('-x','--execute', help='Run program', action="store_true")
@@ -151,7 +149,7 @@ def main():
     execute = args.execute
 
     model_a = args.modelA
-    model_b = "gpt-4o"
+    model_b = args.modelB
 
     # Folder containing the output files
     folder = args.outputdir
@@ -164,7 +162,10 @@ def main():
     if int(args.max) > 0 and int(args.max) < max_value:
         max_value = int(args.max)
 
-    print('MAX_VALUE =', max_value)
+    if execute:
+        print(f'Running on {max_value} elements of {inputs} with {model_b} as judge, saving results to {folder}.')
+    else:
+        print(f'Checking what is runnable on {max_value} elements of {inputs} with {model_b} as judge.')
 
     # Total range to cover
     total_range = (0, max_value)
