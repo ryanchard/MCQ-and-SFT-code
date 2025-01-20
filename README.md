@@ -18,16 +18,30 @@ The program `generate_qa_or_mc.py` calls an LLM (currently GPT4o) to generate ei
                         Input PDF directory
   -q, --qa              Generate QA pairs rather than MCQs
   -o OUTPUT, --output OUTPUT
-                        Output file for JSON (default=output_file)
+                        Output file for JSON (default=output_file) and errors
   -c CHUNKSIZE, --chunksize CHUNKSIZE
-                        Chunk size (default=1000 tokens)
+                        Chunk size (default=1000)
+  -s STARTFILE, --startfile STARTFILE
+                        Start file number(default=0)
+  -e ENDFILE, --endfile ENDFILE
+                        End file number (default=all)
 ```
 For example, the following generates MCQs for each PDF in directory PDFs, creating files `my_output.json` for generated MCQs and `my_output.error` to list any parse errors.
 ```
 python generate_qa_or_mc.py -i PDFs -o my_output
 ```
-Notes:
+Note:
 * You need a file `openai_access_token.txt` that contains your OpenAI access token.
+
+As this program takes a while to run you may want to process just a subset of your PDF files, say just the first 10 as in the following:
+```
+python generate_qa_or_mc.py -i PDFs -o my_output -s 0 -e 10
+```
+which will generate output files `my_output_0_20.json` and `my_output_0_20.error`.
+
+## `combine_json_files.py` and `extract_qa.py`: Prepare files for generate and grade
+
+The `generate_qa_or_mc.py` program generates a list of JSON objects. If you run it on subsets of the PDFs, you can use `combine_json_files.py` to combine the resulting JSON files. Then run `extract_qa.py` to create a file that contains only "question" and "answer" fields.
 
 ## `generate_and_grade_answers.py`: Generate and Grade Answers with an LLM
 
