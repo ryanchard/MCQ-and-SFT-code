@@ -1,7 +1,7 @@
 # Code for generating QA pairs and MCQs from PDFs, etc.
 
 This repository provides access to programs as follows:
-* `generate_qa_or_mc.py`: Prepare question-answer pairs (QA) or multiple-choice questions (MCQ) from PDF documents
+* `generate_qa_or_mc.py`: Prepare question-answer pairs (QA) or multiple-choice questions (MCQ) from PDF documents (and also `combine_json_files.py` and `extract_qa.py` to prepare files for next step)
 * `generate_and_grade_answers.py`: Apply an LLM hosted on the ALCF inference service to MCQs, and another LLM to score results
 * `run_missing_generates.py`: Perform runs of `generate_and_grade_answers.py` to generate missing outputs.
 * `check_alcf_service_status.py`: Determine what models are currently running on ALCF inference service.
