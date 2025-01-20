@@ -1,4 +1,5 @@
 import requests
+import sys
 
 with open('alcf_access_token.txt', 'r') as file:
     alcf_access_token = file.read().strip()
@@ -19,7 +20,8 @@ else:
     print("Error:", response.status_code, response.text)
     exit(1)
 
-# print(status)
+if len(sys.argv) > 1:
+    print(f'Full status: {status}\n')
 
 def get_models(status, status1, status2):
     models = status[status1]
