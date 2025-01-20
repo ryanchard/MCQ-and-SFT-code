@@ -3,14 +3,28 @@ import re
 import subprocess
 import requests
 import openai
-
-from alcf_inference_utilities import get_names_of_alcf_chat_models
+import json
 
 with open('alcf_access_token.txt', 'r') as file:
     alcf_access_token = file.read().strip()
 
-alcf_chat_models = status['clusters']['sophia']['frameworks']['vllm']['models']
+# Define the URL and headers for ALCF Inference Service list-endpoints
+url = "https://data-portal-dev.cels.anl.gov/resource_server/list-endpoints"
+headers = {
+    "Authorization": f"Bearer {alcf_access_token}"
+}
 
+# Make the GET request
+response = requests.get(url, headers=headers)
+
+# Check the response
+if response.status_code == 200:
+    status = response.json()
+else:
+    print("Error:", response.status_code, response.text)
+    exit(1)
+
+alcf_chat_models = status['clusters']['sophia']['frameworks']['vllm']['models']
 
 def parse_existing_ranges(folder, model_a, model_b):
     # Replace '/' with '+' in model_a for filename compatibility
@@ -18,6 +32,7 @@ def parse_existing_ranges(folder, model_a, model_b):
 
     # Collect existing ranges from filenames
     existing_ranges = []
+    if not os.path.exists(folder): os.makedirs(folder)
     for filename in os.listdir(folder):
         parts = filename.split('_')
         if parts[1] != f'{model_a_safe}:{model_b}':
@@ -141,10 +156,14 @@ def main():
     folder = args.outputdir
     inputs = args.inputfile
 
-    if int(args.max) > 0:
+    with open(inputs, "r", encoding="utf-8") as f:
+        data = json.load(f)
+        max_value = len(data)
+
+    if int(args.max) > 0 and int(args.max) < max_value:
         max_value = int(args.max)
-    else:
-        max_value = 2740
+
+    print('MAX_VALUE =', max_value)
 
     # Total range to cover
     total_range = (0, max_value)
@@ -170,13 +189,13 @@ def main():
                 if model_a not in alcf_chat_models:
                     print(f'Skipping {model_a} as not a chat model')
                     continue
-                run_requested(inputs,folder, model_a, model_b, total_range, batch_size, execute)
+                run_requested(inputs, folder, model_a, model_b, total_range, batch_size, execute)
         if args.start:
             print(f'Trying all ALCF chat models\n')
             all_model_list = alcf_chat_models
             all_model_list = [model for model in all_model_list if 'auroragpt-0.1-chkpt' not in model]
             for model_a in all_model_list:
-                run_requested(inputs,folder, model_a, model_b, total_range, batch_size, execute)
+                run_requested(inputs, folder, model_a, model_b, total_range, batch_size, execute)
     else:
         if model_a in running_model_list:
             run_requested(inputs,folder, model_a, model_b, total_range, batch_size, execute)

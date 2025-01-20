@@ -1,9 +1,17 @@
 import json
 from pathlib import Path
+import argparse
 
-# Directory containing the JSON files
-input_directory = "FrankieFiles"
-output_file = "combined.json"
+# Set up argument parsing
+parser = argparse.ArgumentParser(description="Combine JSON files in a directory into a single JSON file.")
+parser.add_argument("-i", "--inputdir", required=True, help="Input directory containing JSON files")
+parser.add_argument("-o", "--output", required=True, help="Output file for the combined JSON")
+
+args = parser.parse_args()
+
+# Get input directory and output file from arguments
+input_directory = args.inputdir
+output_file = args.output
 
 # Initialize an empty list to hold all JSON objects
 combined_json_list = []
@@ -20,6 +28,8 @@ for json_file in Path(input_directory).glob("*.json"):
                 print(f"Skipping {json_file}: Not a JSON list")
         except json.JSONDecodeError as e:
             print(f"Skipping {json_file}: Invalid JSON - {e}")
+
+combined_json_list.sort(key=lambda x: (x.get("filenum", float('inf')), x.get("chunknum", float('inf'))))
 
 # Write the combined list to the output file
 with open(output_file, "w") as output:
