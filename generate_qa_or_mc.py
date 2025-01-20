@@ -8,6 +8,7 @@ import time  # For timing
 import PyPDF2
 import spacy
 from openai import OpenAI
+import tiktoken
 
 ##############################################################################
 # Explicit API settings
@@ -83,6 +84,7 @@ def get_model_parameters(model):
         exit(1)
     return (model, key, endpoint)
 
+
 def query_model(model, system_message, user_message, temperature, error_message):
     (modelname, key, ep) = model
     client = OpenAI(
@@ -90,16 +92,53 @@ def query_model(model, system_message, user_message, temperature, error_message)
         base_url = ep
     )
 
+    messages=[
+        {"role": "system", "content": system_message},
+        {"role": "user",   "content": user_message},
+    ]
+
+    total_tokens = count_tokens(messages, modelname)
+
+    if total_tokens > 120000:
+        print(f'SKIPPING: Message has {total_tokens} tokens\n================\n{messages}\n================\n')
+        return None
+
     response = client.chat.completions.create(
         model=modelname,
-        messages=[
-            {"role": "system", "content": system_message},
-            {"role": "user",   "content": user_message},
-        ],
+        messages=messages,
         temperature=temperature,
     )
     content = response.choices[0].message.content.strip()
     return content
+
+
+def count_tokens(messages, model="gpt-4"):
+    """
+    Calculate the number of tokens in a list of messages for a given OpenAI model.
+    
+    Args:
+    - messages (list): A list of message dictionaries (e.g., [{"role": "user", "content": "Hello!"}]).
+    - model (str): The name of the OpenAI model (e.g., "gpt-4", "gpt-3.5-turbo").
+    
+    Returns:
+    - int: Total token count.
+    """
+    # Load the tokenizer for the specified model
+    encoding = tiktoken.encoding_for_model(model)
+    
+    total_tokens = 0
+
+    for message in messages:
+        # Add tokens for the role (e.g., "user", "system", "assistant")
+        total_tokens += len(encoding.encode(message["role"]))
+        
+        # Add tokens for the content
+        total_tokens += len(encoding.encode(message["content"]))
+        
+        # Each message includes additional tokens (e.g., separators)
+        total_tokens += 2  # Account for the separators in OpenAI's message format
+    
+    return total_tokens
 
 
 def extract_text_from_pdf(pdf_path: str) -> str:
@@ -133,7 +172,7 @@ def split_text_into_chunks(text: str, chunk_size: int = CHUNK_SIZE) -> list:
 
     for sentence in sentences:
         word_count = len(sentence.split())
-
+        
         # If adding this sentence exceeds the chunk_size, start a new chunk
         if current_length + word_count > chunk_size and current_chunk:
             chunks.append(" ".join(current_chunk))
@@ -148,6 +187,7 @@ def split_text_into_chunks(text: str, chunk_size: int = CHUNK_SIZE) -> list:
         chunks.append(" ".join(current_chunk))
 
     return chunks
+
 
 def summarize_and_expand_chunk(model, chunk):
     # --------------------------------------------------------------------
@@ -187,6 +227,8 @@ def summarize_and_expand_chunk(model, chunk):
 
     return augmented_chunk
 
+
+
 def generate_qa_or_mc(errorfile, model, filenum, filename, chunks: list) -> list:
     """
     For each chunk:
@@ -205,7 +247,7 @@ def generate_qa_or_mc(errorfile, model, filenum, filename, chunks: list) -> list
 
     for chunknum, chunk in enumerate(chunks, start=1):
         print(f'\tChunk {chunknum}:', end=" ")
-        sys.stdout.flush()
+        sys.stdout.flush() 
         # --------------------------------------------------------------------
         # Step 1: Summarize & expand the chunk => augmented_chunk
         # --------------------------------------------------------------------
@@ -270,7 +312,7 @@ def generate_qa_or_mc(errorfile, model, filenum, filename, chunks: list) -> list
                 f'{{"answer":"...","score":9}}.'
                 f'Do NOT include Markdown formatting like "```json". do NOT include any backticks ("`").'
             )
-       else:
+        else:
             system_message_3 = (
                 "You are a helpful assistant that evaluates how well an answer "
                 "matches the question in context of the augmented_chunk. "
@@ -313,10 +355,11 @@ def generate_qa_or_mc(errorfile, model, filenum, filename, chunks: list) -> list
                 error_string = f'Fail on chunk {chunknum} of file {filename}: {step3_output}\n'
                 errorfile.write(error_string)
                 continue
-
+            
         model_answer = parsed_json.get("answer", "").strip()
         model_score = parsed_json.get("score", 0)
-       # Print the score on the same line (no newline)
+
+        # Print the score on the same line (no newline)
         #print(f"{model_score}", end=" ")
         print(f"{model_score}")
         sys.stdout.flush()
@@ -338,7 +381,7 @@ def generate_qa_or_mc(errorfile, model, filenum, filename, chunks: list) -> list
     return qa_pairs
 
 
-def process_directory(errorfile, model, qa_or_mc, chunksize, input_dir: str, output_file: str = "output.json"):
+def process_directory(startfile, endfile, output, model, qa_or_mc, chunksize, input_dir: str):
     """
     Main function to:
     1) Iterate over all PDFs or TXT files in a directory.
@@ -356,13 +399,22 @@ def process_directory(errorfile, model, qa_or_mc, chunksize, input_dir: str, out
 
     # Gather all PDF/TXT files
     files = [
-        f for f in os.listdir(input_dir)
+        f for f in os.listdir(input_dir) 
         if f.lower().endswith(".pdf") or f.lower().endswith(".txt")
     ]
     total_files = len(files)
     if total_files == 0:
         print("No PDF or TXT files found in directory.")
         return
+
+    if endfile==-1:
+        endfile = total_files
+    if startfile > total_files:
+        startfile = total_files
+
+    output_file = f'{output}_{startfile}_{endfile}.json'
+    error_file = open(f'{output}_{startfile}_{endfile}.error', 'w')
+    
 
     all_prompt_qa_or_mc = []
 
@@ -373,6 +425,13 @@ def process_directory(errorfile, model, qa_or_mc, chunksize, input_dir: str, out
 
     # Iterate over files
     for filenum, filename in enumerate(files, start=1):
+        if filenum < startfile:
+            print(f'Skipping file {filenum}: {filename}')
+            continue
+        if filenum > endfile:
+            print(f'Skipping file {filenum}: {filename}')
+            continue
+
         file_path = os.path.join(input_dir, filename)
 
         # Timestamp before processing this file
@@ -391,19 +450,21 @@ def process_directory(errorfile, model, qa_or_mc, chunksize, input_dir: str, out
         chunks = split_text_into_chunks(text, chunksize)
 
         # 3) Generate Q/A pairs
-        prompt_qa_or_mc = generate_qa_or_mc(errorfile, model, filenum, filename, chunks)
+        prompt_qa_or_mc = generate_qa_or_mc(error_file, model, filenum, filename, chunks)
 
-        with open('tmp_file', 'a+', encoding='utf-8') as out_f:
-            json.dump(prompt_qa_or_mc, out_f, ensure_ascii=False, indent=2)
+        if prompt_qa_or_mc != None:
 
-        # 4) Accumulate results
-        all_prompt_qa_or_mc.extend(prompt_qa_or_mc)
+            with open('tmp_file', 'a+', encoding='utf-8') as out_f:
+                json.dump(prompt_qa_or_mc, out_f, ensure_ascii=False, indent=2)
 
+            # 4) Accumulate results
+            all_prompt_qa_or_mc.extend(prompt_qa_or_mc)
+    
         # Timestamp after processing
         file_end_time = time.time()
         file_time_taken = file_end_time - file_start_time
 
-       # Update counters
+        # Update counters
         processed_count += 1
         cumulative_time += file_time_taken
 
@@ -438,6 +499,7 @@ def process_directory(errorfile, model, qa_or_mc, chunksize, input_dir: str, out
         final_avg_time_per_file = total_time / processed_count
         print(f"Average time to process each file: {human_readable_time(final_avg_time_per_file)}")
 
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Program to generate QA pairs or MC questions from PDF')
@@ -445,6 +507,8 @@ if __name__ == "__main__":
     parser.add_argument('-q','--qa', help='Generate QA pairs rather than MCQs', action="store_true")
     parser.add_argument('-o','--output', help='Output file for JSON (default=output_file)', default='output_file')
     parser.add_argument('-c','--chunksize', help=f'Chunk size (default={CHUNK_SIZE})', default=CHUNK_SIZE)
+    parser.add_argument('-s','--startfile', help=f'Start file number', type=int, default=0)
+    parser.add_argument('-e','--endfile', help=f'End file number', type=int, default=-1)
     args = parser.parse_args()
 
     if args.qa:
@@ -453,12 +517,8 @@ if __name__ == "__main__":
         qa_or_mc = 'mc'
 
     input_directory = args.inputdir
-    output_json     = args.output + '.json'
-    error_file      = args.output + '.error'
     model           = get_model_parameters('gpt-4o')
 
-    print(f'Generating {qa_or_mc} from {input_directory} to {output_json} with {model[0]} and chunk size {args.chunksize}')
+    print(f'Generating {qa_or_mc} from {input_directory} with {model[0]} and chunk size {args.chunksize}')
 
-    errorfile = open(error_file, "w")
-
-    process_directory(errorfile, model, qa_or_mc, args.chunksize, input_directory, output_json)
+    process_directory(args.startfile, args.endfile, args.output, model, qa_or_mc, args.chunksize, input_directory)
