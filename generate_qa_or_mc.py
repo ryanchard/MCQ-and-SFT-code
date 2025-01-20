@@ -30,6 +30,12 @@ with open('openai_access_token.txt', 'r') as file:
 ##############################################################################
 CHUNK_SIZE = 1000  # approximate number of words per chunk
 
+models = alcf_inference_utilities.get_alcf_chat_models()
+
+print(models)
+
+exit()
+
 alcf_chat_models = ['Qwen/Qwen2.5-14B-Instruct',
                     'Qwen/Qwen2.5-7B-Instruct',
                     'Qwen/QwQ-32B-Preview',
