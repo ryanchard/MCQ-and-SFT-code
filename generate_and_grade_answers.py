@@ -30,14 +30,14 @@ import time
 
 from alcf_inference_utilities import get_names_of_alcf_chat_models
 
+from inference_auth_token import get_access_token
+alcf_access_token = get_access_token()
+
 
 # ---------------------------------------------------------------------
 # Configuration constants for TWO different models/endpoints/API keys
 # ---------------------------------------------------------------------
 OPENAI_EP  = 'https://api.openai.com/v1'
-
-with open('alcf_access_token.txt', 'r') as file:
-    alcf_access_token = file.read().strip()
 
 with open('openai_access_token.txt', 'r') as file:
     openai_access_token = file.read().strip()

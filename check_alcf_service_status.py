@@ -1,8 +1,8 @@
 import requests
 import sys
 
-with open('alcf_access_token.txt', 'r') as file:
-    alcf_access_token = file.read().strip()
+from inference_auth_token import get_access_token
+alcf_access_token = get_access_token()
 
 # Define the URL and headers
 url = "https://data-portal-dev.cels.anl.gov/resource_server/sophia/jobs"

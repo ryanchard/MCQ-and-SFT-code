@@ -5,8 +5,8 @@ import requests
 import openai
 import json
 
-with open('alcf_access_token.txt', 'r') as file:
-    alcf_access_token = file.read().strip()
+from inference_auth_token import get_access_token
+alcf_access_token = get_access_token()
 
 # Define the URL and headers for ALCF Inference Service list-endpoints
 url = "https://data-portal-dev.cels.anl.gov/resource_server/list-endpoints"
@@ -56,6 +56,7 @@ def find_missing_ranges(existing_ranges, total_range):
 
     return missing_ranges
 
+
 def generate_commands(inputs, folder, model_a, model_b, total_range, batch_size):
     # Parse existing ranges from filenames
     existing_ranges = parse_existing_ranges(folder, model_a, model_b)
@@ -81,6 +82,7 @@ def generate_commands(inputs, folder, model_a, model_b, total_range, batch_size)
 
     return commands
 
+
 def run_requested(inputs, folder, model_a, model_b, total_range, batch_size, execute): 
     print(f"Commands to run for models '{model_a}' and '{model_b}' for range {total_range}:")
 
@@ -95,7 +97,7 @@ def run_requested(inputs, folder, model_a, model_b, total_range, batch_size, exe
             print(f'    Executing {command}')
             try:
                 subprocess.run(command, shell=True)
-            except error as e:
+            except OSError as e:
                 print(f'    Error {e}')
                 return -1
         else:
@@ -134,6 +136,14 @@ def get_models():
     return(running_model_list, queued_model_list)
 
 
+"""
+We want to run potentially many different modelAs and evaluate with many different modelBs.
+
+If a modelA has already been run once and scored with one modelB, it can be rescored with another.
+
+
+
+"""
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Program to run LLM B to rate answers provided by LLM A')
