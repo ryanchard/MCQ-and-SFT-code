@@ -55,16 +55,17 @@ Note:
 * You need to edit the file to specify where to publish models in HuggingFace
 
 ## Code for other useful things
+
+Determine what models are currently running on ALCF inference service (see below for more info)
 ```
-# Determine what models are currently running on ALCF inference service (see below for more info)
 python check_alcf_service_status.py
-
-# Determine what answers have been generated and scored, and what additional runs
-# could be performed, given running models, to generate and score additional answers 
+```
+Determine what answers have been generated and scored, and what additional runs could be performed, _given running models_, to generate and score additional answers. (You may want to submit runs to start models. Use `-m` flag to see what could be useful to submit.) 
+```
 python review_status.py -o <result-directory>
-
-# run_missing_generates.py`: Perform runs of `generate_and_grade_answers.py` to generate missing outputs.
-# (See below for more info)
+```
+Perform runs of `generate_answers` and `grade_answers.py` to generate missing outputs. (See below for more info)
+```
 python run_missing_generates.py -o <result-directory>
 ```
 
