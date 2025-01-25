@@ -1,53 +1,53 @@
-# Code for generating QA pairs and MCQs from PDFs, etc.
+# Code for generating and evaluating MCQs
 
-This repository provides access to programs as follows:
-* `generate_qa_or_mc.py`: Prepare question-answer pairs (QA) or multiple-choice questions (MCQ) from PDF documents (and also `combine_json_files.py` and `extract_qa.py` to prepare files for next step)
-* `generate_and_grade_answers.py`: Apply an LLM hosted on the ALCF inference service to MCQs, and another LLM to score results
-* `run_missing_generates.py`: Perform runs of `generate_and_grade_answers.py` to generate missing outputs.
-* `check_alcf_service_status.py`: Determine what models are currently running on ALCF inference service.
+Programs to run PDFs -> JSON -> LLM-generated MCQs -> LLM-generated answers -> LLM-scored answers
 
-The original programs were written by Rick Stevens and then adapted for large-scale use at ALCF by Ian Foster.
-
-Please email foster@uchicago.edu if you see things that are unclear or missing.
-
-## Generate QA pairs or MCQs from PDFs
-
-The program `generate_qa_or_mc.py` calls an LLM (currently GPT4o) to generate either question-answer pairs (QA) or multiple-choice questions (MCQ) from a set of PDFs. Options are as follows:
+Details on programs follow. Use `-h` to learn about other options.
 ```
-% python generate_qa_or_mc.py -h
-  -h, --help            show this help message and exit
-  -i INPUTDIR, --inputdir INPUTDIR
-                        Input PDF directory
-  -q, --qa              Generate QA pairs rather than MCQs
-  -o OUTPUT, --output OUTPUT
-                        Output file for JSON (default=output_file) and errors
-  -c CHUNKSIZE, --chunksize CHUNKSIZE
-                        Chunk size (default=1000)
-  -s STARTFILE, --startfile STARTFILE
-                        Start file number(default=0)
-  -e ENDFILE, --endfile ENDFILE
-                        End file number (default=all)
-```
-For example, the following generates MCQs for each PDF in directory PDFs, creating files `my_output.json` for generated MCQs and `my_output.error` to list any parse errors.
-```
-python generate_qa_or_mc.py -i PDFs -o my_output
+# 1) Extract text from PDFs to create JSON files
+python extract_text_from_pdfs.py -i <PDF-directory> -o <JSON-directory>
+
+# 1a) Or: Extract text from PDFs with AdaParse for higher quality
+#     See https://github.com/7shoe/AdaParse/tree/main
+
+# 2) Use specified LLM to generate MCQs for papers, after dividing paper text into chunks
+#    and augmenting each chunk with extra info
+python generate_mcqs.py -i <JSON-directory> -o <JSON-file> -m <model>
+
+# 2a) Next is useful if you run generate_mcqs.py multiple times to generate multiple JSON files
+python combine_json_files.py -i <JSON-directory> -o <JSON-file>
+
+# 3) Select subset of MCQs from output of step 2, for subsequent use
+python select_mcqs_at_random.py -i <JSON-file> -o <JSON-file> -n <N>
+
+# 4) Use specified LLM to generate answers to MCQs generated in step 2
+#    Place results in "<result-directory>/answers_<model-A>.json"
+python generate_answers.py -i <input-json> -o <result-directory> -m <model>
+
+# 5) Use specified LLM to score answers to MCQs generated in step 4
+#    Look for file "answers_<model-A>.json" in <result-directory>
+#    Produce file "scores_<model-A>_<model-B>.json"
+python score_answers.py -o <result-directory> -a <model-A> -b <model-B>
 ```
 Note:
 * You need a file `openai_access_token.txt` that contains your OpenAI access token.
 
-As this program takes a while to run you may want to process just a subset of your PDF files, say just the first 10 as in the following:
+Additional useful programs:
 ```
-python generate_qa_or_mc.py -i PDFs -o my_output -s 0 -e 10
-```
-which will generate output files `my_output_0_20.json` and `my_output_0_20.error`.
+# Determine what models are currently running on ALCF inference service.
+python check_alcf_service_status.py
 
-## `combine_json_files.py`: Prepare files for generate and grade
+# Determine what answers have been generated and scored, and what additional runs
+# could be performed, given running models, to generate and score additional answers 
+python review_status.py -o <result-directory>
 
-The `generate_qa_or_mc.py` program generates a list of JSON objects. If you run it on subsets of the PDFs, you can use `combine_json_files.py` to combine the resulting JSON files. For example:
-```
-python combine_json_files.py -i <directory-containing-jsons> -o all_json.json
-```
-(The program `extract_qa.py` creates a file that contains only "question" and "answer" fields. Not sure if we need that.)
+# run_missing_generates.py`: Perform runs of `generate_and_grade_answers.py` to generate missing outputs.
+# (may need to be updated)
+python run_missing_generates.py -o <result-directory>
+
+Please email stevens@anl.gov and foster@uchicago.edu if you see things that are unclear or missing.
+
+
 
 ## `select_mcqs_at_random_from_json.py`: Select *N* MCQs at random
 Having generated a few thousand MCQs, you may not want to process them all. Thus for example the following call selects 200 MCQs at random from the specified file (here, `all_json.json`) and puts them in a file `200.json`.
@@ -142,4 +142,45 @@ Note:
 * You need a valid ALCF access token stored in a file `alcf_access_token.txt`.  See [how to generate an ALCF access token](https://github.com/argonne-lcf/inference-endpoints?tab=readme-ov-file#authentication).
 * Here is a list of [models supported by the ALCF inference service](https://github.com/argonne-lcf/inference-endpoints?tab=readme-ov-file#-available-models).
 * "N/A" is a test model used by ALCF, it can be ignored.
+
+## Old programs
+
+## Generate QA pairs or MCQs from PDFs
+
+The program `generate_qa_or_mc.py` calls an LLM (currently GPT4o) to generate either question-answer pairs (QA) or multiple-choice questions (MCQ) from a set of PDFs. Options are as follows:
+```
+% python generate_qa_or_mc.py -h
+  -h, --help            show this help message and exit
+  -i INPUTDIR, --inputdir INPUTDIR
+                        Input PDF directory
+  -q, --qa              Generate QA pairs rather than MCQs
+  -o OUTPUT, --output OUTPUT
+                        Output file for JSON (default=output_file) and errors
+  -c CHUNKSIZE, --chunksize CHUNKSIZE
+                        Chunk size (default=1000)
+  -s STARTFILE, --startfile STARTFILE
+                        Start file number(default=0)
+  -e ENDFILE, --endfile ENDFILE
+                        End file number (default=all)
+```
+For example, the following generates MCQs for each PDF in directory PDFs, creating files `my_output.json` for generated MCQs and `my_output.error` to list any parse errors.
+```
+python generate_qa_or_mc.py -i PDFs -o my_output
+```
+Note:
+* You need a file `openai_access_token.txt` that contains your OpenAI access token.
+
+As this program takes a while to run you may want to process just a subset of your PDF files, say just the first 10 as in the following:
+```
+python generate_qa_or_mc.py -i PDFs -o my_output -s 0 -e 10
+```
+which will generate output files `my_output_0_20.json` and `my_output_0_20.error`.
+
+## `combine_json_files.py`: Prepare files for generate and grade
+
+The `generate_qa_or_mc.py` program generates a list of JSON objects. If you run it on subsets of the PDFs, you can use `combine_json_files.py` to combine the resulting JSON files. For example:
+```
+python combine_json_files.py -i <directory-containing-jsons> -o all_json.json
+```
+(The program `extract_qa.py` creates a file that contains only "question" and "answer" fields. Not sure if we need that.)
 
