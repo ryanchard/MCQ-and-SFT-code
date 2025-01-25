@@ -1,6 +1,6 @@
 # Code for generating and evaluating MCQs
 
-Programs to run PDFs -> JSON -> LLM-generated MCQs -> LLM-generated answers -> LLM-scored answers
+Programs to run PDFs &rarr; JSON &rarr; LLM-generated MCQs &rarr; LLM-generated answers &rarr; LLM-scored answers
 
 Details on programs follow. Use `-h` to learn about other options.
 ```
@@ -21,6 +21,7 @@ python combine_json_files.py -i <JSON-directory> -o <JSON-file>
 python select_mcqs_at_random.py -i <JSON-file> -o <JSON-file> -n <N>
 
 # 4) Use specified LLM to generate answers to MCQs generated in step 2
+#    Read MCQs in <input-json>
 #    Place results in "<result-directory>/answers_<model-A>.json"
 python generate_answers.py -i <input-json> -o <result-directory> -m <model>
 
@@ -30,7 +31,15 @@ python generate_answers.py -i <input-json> -o <result-directory> -m <model>
 python score_answers.py -o <result-directory> -a <model-A> -b <model-B>
 ```
 Note:
-* You need a file `openai_access_token.txt` that contains your OpenAI access token.
+* You need a file `openai_access_token.txt` that contains your OpenAI access token if you are to use `gpt-4o`.
+
+Fine-tuning programs
+```
+python lora_fine_tune.py ...
+python full_fine_tune.py ...
+```
+Note:
+* You need a file `hf_access_token.txt` if you want to publish models to HuggingFace.
 
 Additional useful programs:
 ```
@@ -44,16 +53,12 @@ python review_status.py -o <result-directory>
 # run_missing_generates.py`: Perform runs of `generate_and_grade_answers.py` to generate missing outputs.
 # (may need to be updated)
 python run_missing_generates.py -o <result-directory>
+```
 
 Please email stevens@anl.gov and foster@uchicago.edu if you see things that are unclear or missing.
 
+##########======== IGNORE WHAT FOLLOWS ==========##########
 
-
-## `select_mcqs_at_random_from_json.py`: Select *N* MCQs at random
-Having generated a few thousand MCQs, you may not want to process them all. Thus for example the following call selects 200 MCQs at random from the specified file (here, `all_json.json`) and puts them in a file `200.json`.
-```
-python select_mcqs_at_random_from_json.py -i all_json.json -o 200.json -n 200
-```
 
 ## `generate_and_grade_answers.py`: Generate and Grade Answers with an LLM
 
