@@ -327,7 +327,7 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
     # '/lus/eagle/projects/argonne_tpc/siebenschuh/hypothesis_prediction/astro_parsed/ianfoster_pdfs/parsed_pdfs'
 
     # A special treat, we have some JSONL files prepared by AdaParse
-    files = [ f for f in os.listdir(JSONL_PATH) if f.lower().endswith(".jsonl") or f.lower().endswith(".json") ]
+    files = [ f for f in os.listdir(input_dir) if f.lower().endswith(".jsonl") or f.lower().endswith(".json") ]
 
     total_files = len(files)
     if total_files == 0:
