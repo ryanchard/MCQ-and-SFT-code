@@ -23,8 +23,9 @@ output_dir   = sys.argv[2]  # e.g. "llama-3.1-8B-merged-sft-rick"
 ###############################################################################
 # 2. Log in to Hugging Face (optional - only needed if you push to hub)
 ###############################################################################
-access_token = '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'  # your HF token here
-login(access_token)
+with open('hf_access_token.txt', 'r') as file:
+    hf_access_token = file.read().strip()
+login(hf_access_token)
 
 max_seq_length = 2048  # For example, supports RoPE scaling internally
 
