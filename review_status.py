@@ -39,12 +39,14 @@ If a modelA has already been run once and scored with one modelB, it can be resc
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Program to run LLM B to rate answers provided by LLM A')
+    parser.add_argument('-i','--inputs', help='MCQ file', required=True)
     parser.add_argument('-o','--outputdir', help='Directory to look for run results', required=True)
     parser.add_argument('-s','--silent', help='Just show things to run', action='store_true')
     parser.add_argument('-m','--more', help='Also look at non-running/queued models', action='store_true')
     args = parser.parse_args()
 
     # Folder containing the output files
+    inputs = args.inputs
     folder = args.outputdir
     silent = args.silent
     other  = args.more 
@@ -71,7 +73,7 @@ def main():
         print()
 
     # List running models that have not generated answers
-    no_answer_list = [f'python generate_answers.py -o {folder} -i {folder}.json -m {model_a}' for model_a in running_model_list if not os.path.isfile(f'{folder}/answers_{model_a.replace("/","+")}.json')]
+    no_answer_list = [f'python generate_answers.py -o {folder} -i {inputs} -m {model_a}' for model_a in running_model_list if not os.path.isfile(f'{folder}/answers_{model_a.replace("/","+")}.json')]
     if no_answer_list != []:
         if not silent: print('1) Generate answers for models without them (with running models)')
         for command in no_answer_list:
@@ -80,7 +82,7 @@ def main():
     # List for each set of answers which models have reviewed it
     if not silent:
         print()
-        print('1) List answers and scores obtained to date')
+        print('2) List answers and scores obtained to date')
         for file in answers_files:
             model_a = file.split("answers_")[1].replace('+','/')
             print(f'\t{model_a}')
@@ -95,18 +97,18 @@ def main():
         print()
 
     # List running models that have not generated answers
-    no_answer_list     = [f'python generate_answers.py -o {folder} -i {folder}.json -m {model_a}' for model_a in\
+    no_answer_list     = [f'python generate_answers.py -o {folder} -i {inputs} -m {model_a}' for model_a in\
                           running_model_list if not os.path.isfile(f'{folder}/answers_{model_a.replace("/","+")}.json')]
     if no_answer_list != []:
         if not silent:
-            print('2) Generate answers for models without them (with running models)')
+            print('3) Generate answers for models without them (with running models)')
         for command in list(set(no_answer_list)):
             print(f'        {command}')
 
     if not silent: print()
 
     # List for each possible reviewer (i.e., a running model) which answers it has not reviewed
-    if not silent: print('3) Generate scores for any answers that a running model has not generated')
+    if not silent: print('4) Generate scores for any answers that a running model has not generated')
     for model_b in running_model_list:
         for filename in answers_files:
             model_a = extract_model_a_from_answers_file_name(folder, filename)
@@ -118,7 +120,7 @@ def main():
 
     # The other perspective:
     # For each set of answers A that has not been reviewed by model B, construct a score request
-    if not silent: print('4) Generate scores for any answers that a running model has not generated')
+    if not silent: print('5) Generate scores for any answers that a running model has not generated')
     for model_a in models_scored:
         m_list = models_scored[model_a]
         if not silent:
