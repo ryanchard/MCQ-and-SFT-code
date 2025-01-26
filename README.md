@@ -14,7 +14,7 @@ Programs to run PDFs &rarr; JSON &rarr; LLM-generated MCQs &rarr; LLM-generated 
 Details on programs follow. Use `-h` to learn about other options.
 ```
 # 1) Extract text from PDFs to create JSON files
-python extract_text_from_pdfs.py -i <PDF-directory> -o <JSON-directory>
+python simple_parse.py -i <PDF-directory> -o <JSON-directory>
 
 # 1a) Or: Extract text from PDFs with AdaParse for higher quality
 #     See https://github.com/7shoe/AdaParse/tree/main
