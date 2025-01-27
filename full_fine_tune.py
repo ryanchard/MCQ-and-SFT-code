@@ -16,7 +16,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Train a model using SFTTrainer on a JSON dataset.")
     parser.add_argument('-d', "--dataset_file", type=str, required=True, help="Path to the JSON file containing the dataset (e.g. text.json).")
     parser.add_argument('-o', "--output_name", type=str, required=True, help="Directory/name for the final model (e.g. llama-3.1-8B-merged-sft).")
-    parser.add_argument('-u', "--user_name", type=str, required=True, help="Hugging Face user name for HF publication", default=None)
+    parser.add_argument('-u', "--user_name", type=str, help="Hugging Face user name for HF publication", default=None)
 
     return parser.parse_args()
 
