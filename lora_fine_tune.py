@@ -19,8 +19,8 @@ def main():
     # 1. Parse command-line arguments for dataset file and output directory
     # -------------------------------------------------------------------------
     parser = argparse.ArgumentParser( description="Train a LoRA adapter on a given JSON dataset, then merge and save.")
-    parser.add_argument( "--dataset_file", type=str, required=True, help="Path to the JSON file containing the dataset (e.g. text.json).")
-    parser.add_argument( "--output_dir", type=str, required=True, help="Output directory for saving the final model.")
+    parser.add_argument( '-d', "--dataset_file", type=str, required=True, help="Path to the JSON file containing the dataset (e.g. text.json).")
+    parser.add_argument( '-o', "--output_dir", type=str, required=True, help="Output directory for saving the final model.")
     args = parser.parse_args()
 
     dataset_file = args.dataset_file

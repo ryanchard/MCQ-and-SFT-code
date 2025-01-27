@@ -6,6 +6,31 @@ import json
 import re
 import PyPDF2
 
+
+def clean_string(s: str) -> str:
+    """
+    Encode to UTF-8 with error handling, then decode back to str.
+    - 'replace' will insert a replacement character (�) where invalid surrogates appear.
+    - 'ignore' would instead silently remove them.
+    """
+    return s.encode("utf-8", errors="replace").decode("utf-8")
+
+
+def clean_data(obj):
+    """
+    Recursively traverse a Python object (list, dict, string, etc.)
+    and clean all strings.
+    """
+    if isinstance(obj, str):
+        return clean_string(obj)
+    elif isinstance(obj, dict):
+        return {k: clean_data(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [clean_data(item) for item in obj]
+    else:
+        return obj
+
+
 def extract_text_from_pdf(pdf_path: str) -> str:
     """
     Extract all text from a PDF file, given its file path.
@@ -46,6 +71,7 @@ def process_directory(input_dir: str, output_dir: str = "output_files"):
         text = extract_text_from_pdf(file_path)
 
         json_structure = {'path': file_path, 'text': text}
+        json_structure = clean_data(json_structure)
 
         with open(out_path, 'w', encoding='utf-8') as out_f:
             json.dump(json_structure, out_f, ensure_ascii=False, indent=2)
