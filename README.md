@@ -13,21 +13,21 @@ Programs to run PDFs &rarr; JSON &rarr; LLM-generated MCQs &rarr; LLM-generated 
 
 Details on programs follow. Use `-h` to learn about other options.
 ```
-# 1) Extract text from PDFs to create JSON files
-python extract_text_from_pdfs.py -i <PDF-directory> -o <JSON-directory>
+# 1) Extract text from PDFs with simple parser to create JSON files
+python simple_parse.py -i <PDF-directory> -o <Parse-JSON-directory>
 
-# 1a) Or: Extract text from PDFs with AdaParse for higher quality
+# 1a) Or: Extract text from PDFs with higher-quality AdaParse 
 #     See https://github.com/7shoe/AdaParse/tree/main
 
 # 2) Use specified LLM to generate MCQs for papers, after dividing paper text into chunks
 #    and augmenting each chunk with extra info
-python generate_mcqs.py -i <JSON-directory> -o <JSON-file> -m <model>
+python generate_mcqs.py -i <Parse-JSON-directory> -o <MCQ-JSON-file> -m <model>
 
 # 2a) Next is useful if you run `generate_mcqs.py` multiple times and thus have multiple JSON files
 python combine_json_files.py -i <JSON-directory> -o <JSON-file>
 
 # 3) Select subset of MCQs from output of step 2, for subsequent use
-python select_mcqs_at_random.py -i <JSON-file> -o <JSON-file> -n <N>
+python select_mcqs_at_random.py -i <MCQ-JSON-file> -o <MCQ-JSON-file> -n <N>
 
 # 4) Use specified LLM to generate answers to MCQs generated in step 2
 #    Read MCQs in <input-json>
@@ -38,7 +38,14 @@ python generate_answers.py -i <input-json> -o <result-directory> -m <model>
 #    Look for file "answers_<model-A>.json" in <result-directory>
 #    Produce file "scores_<model-A>_<model-B>.json"
 python score_answers.py -o <result-directory> -a <model-A> -b <model-B>
+
+# 6) Run whatever LLMs are running on ALCF inference service to generate and/or score answers
+#    (Based on:
+#     a) Query to inference service to identify running models
+#     b) Examining answers and scores files in <result-directory>)
+python review_status.py -i <MCQ-JSON-file> -o <result-directory>
 ```
+
 Note:
 * You need a file `openai_access_token.txt` that contains your OpenAI access token if you are to use `gpt-4o`.
 
