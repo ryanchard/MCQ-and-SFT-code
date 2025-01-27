@@ -5,6 +5,7 @@ import sys
 import json
 import re
 import PyPDF2
+from pdfminer.high_level import extract_text
 
 
 def clean_string(s: str) -> str:
@@ -37,12 +38,17 @@ def extract_text_from_pdf(pdf_path: str) -> str:
     """
     text_content = []
     with open(pdf_path, 'rb') as f:
-        reader = PyPDF2.PdfReader(f)
-        for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text_content.append(page_text)
-    return "\n".join(text_content)
+        try:
+            reader = PyPDF2.PdfReader(f)
+            for page in reader.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text_content.append(page_text)
+            return "\n".join(text_content)
+        except:
+            print(f'ERROR extracting with PyPDF2 from {str}. Trying pdfminer.')
+            text = extract_text(pdf_path)
+            return text
 
 
 def process_directory(input_dir: str, output_dir: str = "output_files"):
@@ -71,7 +77,7 @@ def process_directory(input_dir: str, output_dir: str = "output_files"):
         text = extract_text_from_pdf(file_path)
 
         json_structure = {'path': file_path, 'text': text}
-        json_structure = clean_data(json_structure)
+        #json_structure = clean_data(json_structure)
 
         with open(out_path, 'w', encoding='utf-8') as out_f:
             json.dump(json_structure, out_f, ensure_ascii=False, indent=2)
