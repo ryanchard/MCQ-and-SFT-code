@@ -1,6 +1,7 @@
 import os
 import requests
 import glob
+import subprocess
 
 from inference_auth_token import get_access_token
 alcf_access_token = get_access_token()
@@ -30,6 +31,7 @@ def extract_model_b_from_scores_file_name(folder, file):
 def generate_scores_file_name(folder, model_a, model_b):
     return f'{folder}/scores_{model_a.replace("/","+")}:{model_b.replace("/","+")}.json'
 
+
 """
 We want to run potentially many different modelAs and evaluate with many different modelBs.
 
@@ -42,6 +44,7 @@ def main():
     parser.add_argument('-i','--inputs', help='MCQ file', required=True)
     parser.add_argument('-o','--outputdir', help='Directory to look for run results', required=True)
     parser.add_argument('-s','--silent', help='Just show things to run', action='store_true')
+    parser.add_argument('-x','--execute', help='Execute commands', action='store_true')
     parser.add_argument('-m','--more', help='Also look at non-running/queued models', action='store_true')
     args = parser.parse_args()
 
@@ -49,6 +52,7 @@ def main():
     inputs = args.inputs
     folder = args.outputdir
     silent = args.silent
+    execute= args.execute
     other  = args.more 
 
     running_model_list, queued_model_list = get_alcf_inference_service_model_queues(alcf_access_token)
@@ -66,80 +70,67 @@ def main():
     models_scored = {}
 
     if not silent:
+        print(f'====== Models running, queued, available at ALCF inference service ====')
         print(f'Running models: {running_model_list}')
         print(f'Queued models : {queued_model_list}')
         other_models = [model for model in alcf_chat_models if model not in running_model_list and model not in queued_model_list]
         print(f'Other models : {other_models}')
-        print()
 
-    # List running models that have not generated answers
-    no_answer_list = [f'python generate_answers.py -o {folder} -i {inputs} -m {model_a}' for model_a in running_model_list if not os.path.isfile(f'{folder}/answers_{model_a.replace("/","+")}.json')]
-    if no_answer_list != []:
-        if not silent: print('1) Generate answers for models without them (with running models)')
-        for command in no_answer_list:
-            print(f'    {command}')
-
-    # List for each set of answers which models have reviewed it
-    if not silent:
-        print()
-        print('2) List answers and scores obtained to date')
+        # List for each set of answers which models have reviewed it
+        print(f'\n====== Answers and scores obtained to date for {folder} ========')
         for file in answers_files:
             model_a = file.split("answers_")[1].replace('+','/')
-            print(f'\t{model_a}')
+            print(f'{model_a}')
             score_files = glob.glob(f'{folder}/scores_{model_a.replace("/","+")}:*')
             m_list = []
             for score_file in score_files:
                 f = score_file.split(f'{folder}/scores_{model_a.replace("/","+")}:')[1]
                 model_b = f.split("_")[0].replace('+','/').replace('.json','')
-                print(f'\t\t{model_b}')
+                print(f'\t{model_b}')
                 m_list.append(model_b)
             models_scored[model_a] = m_list
-        print()
 
     # List running models that have not generated answers
-    no_answer_list     = [f'python generate_answers.py -o {folder} -i {inputs} -m {model_a}' for model_a in\
-                          running_model_list if not os.path.isfile(f'{folder}/answers_{model_a.replace("/","+")}.json')]
+    no_answer_list = [f'python generate_answers.py -o {folder} -i {inputs} -m {model_a}' for model_a in running_model_list if not os.path.isfile(f'{folder}/answers_{model_a.replace("/","+")}.json')]
     if no_answer_list != []:
-        if not silent:
-            print('3) Generate answers for models without them (with running models)')
-        for command in list(set(no_answer_list)):
-            print(f'        {command}')
-
-    if not silent: print()
+        if not silent: print('\n====== Generating answers for running models without them ======')
+        for command in no_answer_list:
+            if execute:
+                print(f'\nExecuting {command}')
+                try:
+                    subprocess.run(command, shell=True)
+                except OSError as e:
+                    print(f'    Error {e}')
+                    return -1
+            else:
+                print(f'\n{command}')
 
     # List for each possible reviewer (i.e., a running model) which answers it has not reviewed
-    if not silent: print('4) Generate scores for any answers that a running model has not generated')
+    if not silent: print('\n====== Score answers with any un-applied running model ======')
     for model_b in running_model_list:
         for filename in answers_files:
             model_a = extract_model_a_from_answers_file_name(folder, filename)
             if not os.path.isfile(generate_scores_file_name(folder, model_a, model_b)):
                 score_filename = generate_scores_file_name(folder, model_a, model_b)
-                print(f'        python score_answers.py -o {folder} -a {model_a} -b {model_b}')
+                command = f'python score_answers.py -o {folder} -a {model_a} -b {model_b}'
+                if execute:
+                    print(f'\nExecuting {command}')
+                    try:
+                        subprocess.run(command, shell=True)
+                    except OSError as e:
+                        print(f'    Error {e}')
+                        return -1
+                else:
+                    print(f'\n{command}')
+
 
     if not silent: print()
-
-    # The other perspective:
-    # For each set of answers A that has not been reviewed by model B, construct a score request
-    if not silent: print('5) Generate scores for any answers that a running model has not generated')
-    for model_a in models_scored:
-        m_list = models_scored[model_a]
-        if not silent:
-            print('\n    Looking at models:', model_a)
-            print('           and judges:', m_list)
-            print()
-        something_to_do = False
-        for model_b in running_model_list:
-            if model_b not in m_list:
-                if something_to_do:
-                    if not silent: print(f'         We will score {model_a} with {model_b}')
-                    something_to_do = False
-                print(f'        python score_answers.py -o {folder} -a {model_a} -b {model_b}')
 
     if other:
        print('\n====== Non-running/queued models ======')
        for model_a in other_models:
            if not os.path.isfile(f'{folder}/answers_{model_a.replace("/","+")}.json'):
-               print(f'        python generate_answers.py -o {folder} -i {folder}.json -m {model_a}')
+               print(f'\npython generate_answers.py -o {folder} -i {folder}.json -m {model_a}')
 
 if __name__ == "__main__":
     main()

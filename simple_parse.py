@@ -33,16 +33,19 @@ def process_directory(input_dir: str, output_dir: str = "output_files"):
     # Iterate over files
     for i, filename in enumerate(files, start=1):
         file_path = os.path.join(input_dir, filename)
+
+        basename, _ = os.path.splitext(filename)
+        out_file = basename + ".json"
+        out_path  = os.path.join(output_dir, out_file)
+        if os.path.isfile(out_path):
+            print(f'Already exists: {i}/{total_files}: {out_path}')
+            continue
+
         print(f"Processing file {i}/{total_files}: {file_path}")
 
         text = extract_text_from_pdf(file_path)
 
         json_structure = {'path': file_path, 'text': text}
-
-        basename, _ = os.path.splitext(filename)
-        out_file = basename + ".json"
-
-        out_path = os.path.join(output_dir, out_file)
 
         with open(out_path, 'w', encoding='utf-8') as out_f:
             json.dump(json_structure, out_f, ensure_ascii=False, indent=2)

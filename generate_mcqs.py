@@ -327,9 +327,12 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
     # '/lus/eagle/projects/argonne_tpc/siebenschuh/hypothesis_prediction/astro_parsed/ianfoster_pdfs/parsed_pdfs'
 
     # A special treat, we have some JSONL files prepared by AdaParse
-    files = [ f for f in os.listdir(input_dir) if f.lower().endswith(".jsonl") or f.lower().endswith(".json") ]
+    json_files  = [ f for f in os.listdir(input_dir) if f.lower().endswith(".json") ]
+    jsonl_files = [ f for f in os.listdir(input_dir) if f.lower().endswith(".jsonl")]
 
-    total_files = len(files)
+    all_files = json_files + jsonl_files
+    total_files = len(all_files)
+
     if total_files == 0:
         print("No suitable files found in directory.")
         return
@@ -339,19 +342,23 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
     cumulative_time = 0.0
     processed_count = 0
 
-    line_counts = []
-    for i, filename in enumerate(files, start=1):
-        file_path = os.path.join(input_dir, filename)
-        with open(os.path.join(input_dir, filename), 'r', encoding='utf-8') as file:
-            line_count = 0
-            for line in file:
-                # Parse each line as a JSON object and append to the list
-                line_count += 1
-        line_counts.append(line_count)
-    print(f'{len(files)} files, with {sum(line_counts)} lines in total: {line_counts}')
+    if len(jsonl_files) > 0:
+        line_counts = []
+        for i, filename in enumerate(jsonl_files, start=1):
+            file_path = os.path.join(input_dir, filename)
+            with open(os.path.join(input_dir, filename), 'r', encoding='utf-8') as file:
+                line_count = 0
+                for line in file:
+                    # Parse each line as a JSON object and append to the list
+                    line_count += 1
+            line_counts.append(line_count)
+        print(f'{len(jsonl_files)} JSONL files, with {sum(line_counts)} lines in total: {line_counts}')
+
+    if len(json_files) > 0:
+        print(f'We have {len(json_files)} JSON files')
 
     # Iterate over files
-    for i, filename in enumerate(files, start=1):
+    for i, filename in enumerate(all_files, start=1):
         all_prompt_answer_pairs = []
         num_chunks = 0
 
@@ -360,11 +367,16 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
         # Timestamp before processing this file jsonl
         file_start_time = time.time()
 
-        print(f"\nProcessing file {i}/{total_files}): {file_path}")
+        print(f"\nProcessing file {i}/{total_files}: {file_path}")
 
         # 1) Extract text 
         with open(os.path.join(input_dir, filename), 'r', encoding='utf-8') as file:
-            lines = file.readlines()
+            if filename.lower().endswith(".json"):
+                json_str = file.read()
+                lines = [json_str]
+            else:
+                lines = file.readlines()
+
             for j, line in enumerate(lines, start=1):
                 print(f'Processing line {j} of {len(lines)} in file {i}')
                 # Parse each line as a JSON object and append to the list
@@ -382,7 +394,7 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
                 # 4) Accumulate results
                 all_prompt_answer_pairs.extend(prompt_answer_pairs)
 
-                # 5) Write all results to a JSON file
+        # 5) Write all results to a JSON file
         out_file = f'{output_dir}/file_{i}.json'
         print(f'Writing output for file {i} with {num_chunks} chunks to {out_file}')
         with open(out_file, 'w', encoding='utf-8') as out_f:
