@@ -44,11 +44,11 @@ def extract_text_from_pdf(pdf_path: str) -> str:
                 page_text = page.extract_text()
                 if page_text:
                     text_content.append(page_text)
-            return "\n".join(text_content)
+            return ("\n".join(text_content), 'PyPDF2')
         except:
             print(f'ERROR extracting with PyPDF2 from {str}. Trying pdfminer.')
             text = extract_text(pdf_path)
-            return text
+            return (text, 'pdfminer')
 
 
 def process_directory(input_dir: str, output_dir: str = "output_files"):
@@ -74,9 +74,9 @@ def process_directory(input_dir: str, output_dir: str = "output_files"):
 
         print(f"Processing file {i}/{total_files}: {file_path}")
 
-        text = extract_text_from_pdf(file_path)
+        (text, parser) = extract_text_from_pdf(file_path)
 
-        json_structure = {'path': file_path, 'text': text}
+        json_structure = {'path': file_path, 'text': text, 'parser':parser}
         #json_structure = clean_data(json_structure)
 
         with open(out_path, 'w', encoding='utf-8') as out_f:
