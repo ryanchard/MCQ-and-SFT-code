@@ -29,6 +29,8 @@ def main():
     output_name  = args.output_name
     user_name    = args.user_name
 
+    print(f'Reading dataset {dataset_file} with results in {output_name}')
+
     # -------------------------------------------------------------------------
     # 2. (Optional) Log in to Hugging Face
     # -------------------------------------------------------------------------
@@ -104,7 +106,7 @@ def main():
         train_dataset=dataset,
         tokenizer=tokenizer,
         args=TrainingArguments(
-            per_device_train_batch_size=4,
+            per_device_train_batch_size=2,
             gradient_accumulation_steps=4,
             warmup_steps=10,
             max_steps=num_steps,
@@ -116,7 +118,7 @@ def main():
         ),
     )
 
-    trainer.train()
+    trainer.train(resume_from_checkpoint=True)
 
     # If you want to switch sides, for instance:
     # tokenizer.padding_side = "left"
@@ -135,7 +137,7 @@ def main():
     # -------------------------------------------------------------------------
     if user_name != None:
         base_model.push_to_hub(f"{user_name}/{output_name}")
-        tokenizer.push_to_hub(f"{user+name}/{output_name}")
+        tokenizer.push_to_hub(f"{user_name}/{output_name}")
 
 if __name__ == "__main__":
     main()

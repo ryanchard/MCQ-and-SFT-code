@@ -64,8 +64,8 @@ def main():
     # List available generated answers
     answers_files = [file.replace('.json', '') for file in glob.glob(f'{folder}/answers_*')]
     if not silent:
-        print(f'\nReviewing answers and scores files in {folder}.')
-        print(f'\nFocused on currently running models, minus mgoin/Nemotron-4-340B-Instruct-hf (slow) and auroragpt-0.1-chkpt-* (buggy):\n')
+        print(f'\nReviewing answers and scores files in {folder}, looking for MCQs not answered and/or scored with running models.')
+        #print(f'\nFocused on currently running models, minus mgoin/Nemotron-4-340B-Instruct-hf (slow) and auroragpt-0.1-chkpt-* (buggy):\n')
 
     models_scored = {}
 
@@ -90,41 +90,54 @@ def main():
                 m_list.append(model_b)
             models_scored[model_a] = m_list
 
-    # List running models that have not generated answers
+
     no_answer_list = [f'python generate_answers.py -o {folder} -i {inputs} -m {model_a}' for model_a in running_model_list if not os.path.isfile(f'{folder}/answers_{model_a.replace("/","+")}.json')]
-    if no_answer_list != []:
-        if not silent: print('\n====== Generating answers for running models without them ======')
-        for command in no_answer_list:
-            if execute:
-                print(f'\nExecuting {command}')
-                try:
-                    subprocess.run(command, shell=True)
-                except OSError as e:
-                    print(f'    Error {e}')
-                    return -1
-            else:
-                print(f'\n{command}')
 
     # List for each possible reviewer (i.e., a running model) which answers it has not reviewed
-    if not silent: print('\n====== Score answers with any un-applied running model ======')
+    no_score_list = []
     for model_b in running_model_list:
         for filename in answers_files:
             model_a = extract_model_a_from_answers_file_name(folder, filename)
             if not os.path.isfile(generate_scores_file_name(folder, model_a, model_b)):
                 score_filename = generate_scores_file_name(folder, model_a, model_b)
                 command = f'python score_answers.py -o {folder} -a {model_a} -b {model_b}'
-                if execute:
-                    print(f'\nExecuting {command}')
-                    try:
-                        subprocess.run(command, shell=True)
-                    except OSError as e:
-                        print(f'    Error {e}')
-                        return -1
-                else:
-                    print(f'\n{command}')
+                no_score_list.append(command)
 
+    if not silent and (no_answer_list != [] or no_score_list != []):
+        print('\n======= Commands that may be executed based on currently running models ==================')
+        if no_answer_list != []:
+            print('a) To generate answers')
+            for command in no_answer_list:
+                print(f'    {command}')
+        else:
+            print('a) To generate answers: None')
+        if no_score_list != []:
+            print('b) To generate scores')
+            for command in no_score_list:
+                print(f'    {command}')
+        else:
+            print('b) To generate scores: None')
 
-    if not silent: print()
+    # List running models that have not generated answers
+    if no_answer_list != [] and not silent and execute:
+        print('\n====== Generating answers with running models ============================================')
+        for command in no_answer_list:
+            print(f'    Executing {command}')
+            try:
+               subprocess.run(command, shell=True)
+            except OSError as e:
+                print(f'    Error {e}')
+                return -1
+
+    if not silent and no_score_list!=[] and execute:
+        print('\n====== Generating scores for answers that can be provided by a running model =============')
+        for command in no_score_list:
+            print(f'    Executing {command}')
+            try:
+                subprocess.run(command, shell=True)
+            except OSError as e:
+                print(f'    Error {e}')
+                return -1
 
     if other:
        print('\n====== Non-running/queued models ======')

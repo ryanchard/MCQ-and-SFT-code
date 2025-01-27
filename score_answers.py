@@ -6,7 +6,7 @@ import os
 import statistics
 import requests
 import openai
-from openai import OpenAI
+from openai import OpenAI, APITimeoutError
 import time
 import glob
 
@@ -27,7 +27,7 @@ with open('openai_access_token.txt', 'r') as file:
 
 # ---------------------------------------------------------------------
 
-def evaluate_answer(model, question: str, reference_answer: str, user_answer: str) -> float:
+def evaluate_answer(index, model, question: str, reference_answer: str, user_answer: str) -> float:
     """
     Calls the model to evaluate how consistent the user_answer is with the reference_answer.
     Returns a numeric score (float) from 1 to 10.
@@ -53,14 +53,26 @@ On a scale of 1 to 10 (10 = exactly matches the reference answer,
 how well the User's Answer matches the Reference Answer. No extra text.
 """
 
-    response = client.chat.completions.create(
-        model=modelname,
-        messages=[
-            {"role": "system", "content": "You are a strict grader. Respond with only the number."},
-            {"role": "user", "content": eval_prompt},
-        ],
-        temperature=0.0,
-    )
+    try:
+        response = client.chat.completions.create(
+            model=modelname,
+            messages=[
+                {"role": "system", "content": "You are a strict grader. Respond with only the number."},
+                {"role": "user", "content": eval_prompt},
+            ],
+            temperature=0.0,
+            timeout=60,
+        )
+    except APITimeoutError as e:
+        # This will catch timeouts from the request_timeout parameter
+        print(f"OpenAI API request timed out: {e}, with {modelname}, index {index}, 60 sec timeout, and prompt={eval_prompt}")
+        return None
+    except Exception as e:
+        # Optionally catch other errors
+        print(f"Some other error occurred: {e}")
+        return None
+
+### We may want to return 0.0 above to be consistent with below
 
     # Extract the numeric score from the assistant's response
     # raw_score = response["choices"][0]["message"]["content"].strip()
@@ -68,6 +80,7 @@ how well the User's Answer matches the Reference Answer. No extra text.
     try:
         score = float(raw_score)
     except ValueError:
+        print('XX ERROR:', raw_score)
         # If the model didn't return a pure number, attempt a fallback or default to 0
         score = 0.0
     
@@ -151,11 +164,12 @@ def main():
         # Use model to evaluate/grade the generated answer in file
         # against the reference answer
         eval_answer_start_time = time.time()
-        score = evaluate_answer(modelB, question, reference_answer, model_answer)
+        score = evaluate_answer(index, modelB, question, reference_answer, model_answer)
         eval_answer_time = time.time() - eval_answer_start_time
         eval_answer_total_time += eval_answer_time
-        scores.append(score)
-        qa_pairs.append({'modelA': modelA_name, 'modelB': modelB[0], 'index': index, 'question': question, 'reference':reference_answer, 'model':model_answer, 'score':score, 'gen_time': gen_time, 'eval_time': f'{eval_answer_time:.4f}', 'file':file, 'filenum':filenum, 'chunknum':chunknum})
+        if score != None:
+            scores.append(score)
+            qa_pairs.append({'modelA': modelA_name, 'modelB': modelB[0], 'index': index, 'question': question, 'reference':reference_answer, 'model':model_answer, 'score':score, 'gen_time': gen_time, 'eval_time': f'{eval_answer_time:.4f}', 'file':file, 'filenum':filenum, 'chunknum':chunknum})
 
         total_time += time.time() - start_time
         start_time = time.time()
