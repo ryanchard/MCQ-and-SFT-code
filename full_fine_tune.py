@@ -16,6 +16,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Train a model using SFTTrainer on a JSON dataset.")
     parser.add_argument('-d', "--dataset_file", type=str, required=True, help="Path to the JSON file containing the dataset (e.g. text.json).")
     parser.add_argument('-o', "--output_name", type=str, required=True, help="Directory/name for the final model (e.g. llama-3.1-8B-merged-sft).")
+    parser.add_argument('-u', "--user_name", type=str, required=True, help="Hugging Face user name for HF publication", default=None)
 
     return parser.parse_args()
 
@@ -26,13 +27,15 @@ def main():
     args = parse_args()
     dataset_file = args.dataset_file
     output_name  = args.output_name
+    user_name    = args.user_name
 
     # -------------------------------------------------------------------------
     # 2. (Optional) Log in to Hugging Face
     # -------------------------------------------------------------------------
-    with open('hf_access_token.txt', 'r') as file:
-        hf_access_token = file.read().strip()
-    login(hf_access_token)
+    if user_name != None:
+        with open('hf_access_token.txt', 'r') as file:
+            hf_access_token = file.read().strip()
+        login(hf_access_token)
 
     max_seq_length = 2048  # For example, supports RoPE scaling internally
 
@@ -51,12 +54,12 @@ def main():
     # 4. (Optional) Configure 4-bit quantization
     #    (Currently commented out; uncomment if needed)
     # -------------------------------------------------------------------------
-    # config = BitsAndBytesConfig(
-    #     load_in_4bit=True,
-    #     bnb_4bit_quant_type="nf4",
-    #     bnb_4bit_use_double_quant=True,
-    #     bnb_4bit_compute_dtype=torch.bfloat16,
-    # )
+    config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_use_double_quant=True,
+        bnb_4bit_compute_dtype=torch.bfloat16,
+    )
 
     # -------------------------------------------------------------------------
     # 5. Define the model and tokenizer
@@ -130,8 +133,9 @@ def main():
     # -------------------------------------------------------------------------
     # 9. (Optional) Push model and tokenizer to HF Hub
     # -------------------------------------------------------------------------
-    base_model.push_to_hub(f"ianfoster/{output_name}")
-    tokenizer.push_to_hub(f"ianfoster/{output_name}")
+    if user_name != None:
+        base_model.push_to_hub(f"{user_name}/{output_name}")
+        tokenizer.push_to_hub(f"{user+name}/{output_name}")
 
 if __name__ == "__main__":
     main()
