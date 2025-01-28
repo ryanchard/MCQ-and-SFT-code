@@ -5,7 +5,7 @@ Here we describe Python programs for:
 * Fine-tuning models based on supplied data
 * Other useful things
 
-Please email stevens@anl.gov and foster@uchicago.edu if you see things that are unclear or missing.
+Please email foster@anl.gov and stevens@anl.gov if you see things that are unclear or missing.
 
 ## Code for generating and evaluating MCQs
 
@@ -17,7 +17,7 @@ Details on programs follow. Use `-h` to learn about other options.
 python simple_parse.py -i <PDF-directory> -o <Parse-JSON-directory>
 
 # 1a) Or: Extract text from PDFs with higher-quality AdaParse 
-#     See https://github.com/7shoe/AdaParse/tree/main
+#     See https://github.com/7shoe/AdaParse/tree/main [still testing that]
 
 # 2) Use specified LLM to generate MCQs for papers, after dividing paper text into chunks
 #    and augmenting each chunk with extra info
@@ -60,6 +60,7 @@ python full_fine_tune.py -i <json-file> -o <model-directory>
 Note:
 * You need a file `hf_access_token.txt` if you want to publish models to HuggingFace.
 * You need to edit the file to specify where to publish models in HuggingFace
+* We are still debugging how to download and run published models
 
 ## Code for other useful things
 

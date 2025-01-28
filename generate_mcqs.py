@@ -78,7 +78,7 @@ def split_text_into_chunks(text: str, chunk_size: int = CHUNK_SIZE) -> list:
     return chunks
 
 
-def generate_question_answer_pairs(model, path, filename, linenum, chunks: list) -> list:
+def generate_mcqs(model, path, filename, linenum, chunks: list) -> list:
     """
     For each chunk:
       1) Summarize and expand the chunk => augmented_chunk
@@ -116,12 +116,6 @@ def generate_question_answer_pairs(model, path, filename, linenum, chunks: list)
             base_url = ep
         )
 
-        # print()
-        # print('SYSTEM:', system_message)
-        # print()
-        # print('USER:', user_message)
-        # print()
-
         try:
             response_1 = client.chat.completions.create(
                 model=modelname,
@@ -131,11 +125,9 @@ def generate_question_answer_pairs(model, path, filename, linenum, chunks: list)
                 ],
                 temperature=0.7,
             )
-            # print('\nRESPONSE', response_1)
+
             # Attempt to parse out the augmented chunk from the model's response
             step1_output = response_1.choices[0].message.content.strip()
-
-            # print('\nEXTRACTED RESPONSE:', step1_output)
             
             # We'll assume the model starts with "augmented_chunk:"
             augmented_chunk = step1_output
@@ -146,7 +138,6 @@ def generate_question_answer_pairs(model, path, filename, linenum, chunks: list)
                     flags=re.IGNORECASE,
                     maxsplit=1
                 )[-1].strip()
-            # print('\nAUGMENTED CHUNK:', augmented_chunk)
 
         except Exception as e:
             print(f"Error summarizing and expanding chunk: {e}")
@@ -220,21 +211,14 @@ def generate_question_answer_pairs(model, path, filename, linenum, chunks: list)
             )
             step3_output = response_3.choices[0].message.content.strip()
 
-            # print('ORIGINAL', step3_output)
             step3_output = step3_output.replace("```json", "")
-            # print('MOD1', step3_output)
-            step3_output_orig = step3_output.replace("```", "")
-            step3_output = step3_output_orig.replace('\\"', "XXXABCXXX")
+            step3_output = step3_output.replace("```", "")
+            step3_output = step3_output.replace('\\"', "XXXABCXXX")
             step3_output = step3_output.replace("\\", "\\\\")
             step3_output = step3_output.replace("XXXABCXXX", '\\"')
 
             # Attempt to parse the JSON
-            # print('\n============ BEGIN JSON PARSING ========\n')
-            # print('JSON:', step3_output)
-            # print('\n============ END JSON ==================\n')
             parsed_json = json.loads(step3_output)
-            # print('\n============ PARSED JSON ===============\n')
-            # print(parsed_json)
             model_answer = parsed_json.get("answer", "").strip()
             model_score = parsed_json.get("score", 0)
 
@@ -257,10 +241,6 @@ def generate_question_answer_pairs(model, path, filename, linenum, chunks: list)
 
         except json.JSONDecodeError:
             print("\nDEBUG: JSON parsing failed. Trying to fix output...")
-            print('\n============ BEGIN JSON PARSING ========\n')
-            print('JSON ORIG:', step3_output_orig)
-            print('JSON:', step3_output)
-            print('\n============ END JSON ==================\n')
 
             # Attempt a second pass to fix the JSON
             fix_prompt = f"""
