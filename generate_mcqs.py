@@ -304,9 +304,7 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
     - Print average time to process a file at the end
     """
 
-    # '/lus/eagle/projects/argonne_tpc/siebenschuh/hypothesis_prediction/astro_parsed/ianfoster_pdfs/parsed_pdfs'
-
-    # A special treat, we have some JSONL files prepared by AdaParse
+    # As AdaParse generates JSONL files, we allow for both
     json_files  = [ f for f in os.listdir(input_dir) if f.lower().endswith(".json") ]
     jsonl_files = [ f for f in os.listdir(input_dir) if f.lower().endswith(".jsonl")]
 
@@ -369,7 +367,7 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
                 num_chunks += len(chunks)
 
                 # 3) Generate Q/A pairs
-                prompt_answer_pairs = generate_question_answer_pairs(model, path, filename, j, chunks)
+                prompt_answer_pairs = generate_mcqs(model, path, filename, j, chunks)
 
                 # 4) Accumulate results
                 all_prompt_answer_pairs.extend(prompt_answer_pairs)
