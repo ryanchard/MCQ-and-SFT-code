@@ -7,6 +7,10 @@ Here we describe Python programs for:
 
 Please email foster@anl.gov and stevens@anl.gov if you see things that are unclear or missing.
 
+## Set up to access ALCF Inference Service 
+
+See [ALCF Inference Service Prerequisites](https://github.com/argonne-lcf/inference-endpoints?tab=readme-ov-file#%EF%B8%8F-prerequisites) for how to set up your ALCF auth token, required to access models via the inference service.
+
 ## Code for generating and evaluating MCQs
 
 Programs to run PDFs &rarr; JSON &rarr; LLM-generated MCQs &rarr; LLM-generated answers &rarr; LLM-scored answers
