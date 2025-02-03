@@ -5,39 +5,21 @@ import json
 import os
 import statistics
 import requests
-import openai
-from openai import OpenAI, APITimeoutError
+#import openai
+#from openai import OpenAI, APITimeoutError
 import time
 import glob
 
-# ---------------------------------------------------------------------
-# Configuration constants for TWO different models/endpoints/API keys
-# ---------------------------------------------------------------------
-from inference_auth_token import get_access_token
-alcf_access_token = get_access_token()
-
-from alcf_inference_utilities import get_names_of_alcf_chat_models
-alcf_chat_models = get_names_of_alcf_chat_models(alcf_access_token)
-
-OPENAI_EP  = 'https://api.openai.com/v1'
-
-with open('openai_access_token.txt', 'r') as file:
-    openai_access_token = file.read().strip()
+from model_access import Model
 
 
 # ---------------------------------------------------------------------
 
-def evaluate_answer(index, model, question: str, reference_answer: str, user_answer: str) -> float:
+def score_answer(index, model, question: str, reference_answer: str, user_answer: str) -> float:
     """
     Calls the model to evaluate how consistent the user_answer is with the reference_answer.
     Returns a numeric score (float) from 1 to 10.
     """
-    # Configure the OpenAI client for model 2
-    (modelname, key, ep) = model
-    client = OpenAI(
-        api_key  = key,
-        base_url = ep
-    )
 
     # We ask the model to strictly return a single number from 1 to 10
     # indicating how well the user_answer matches the reference_answer.
@@ -53,69 +35,38 @@ On a scale of 1 to 10 (10 = exactly matches the reference answer,
 how well the User's Answer matches the Reference Answer. No extra text.
 """
 
-    try:
-        response = client.chat.completions.create(
-            model=modelname,
-            messages=[
-                {"role": "system", "content": "You are a strict grader. Respond with only the number."},
-                {"role": "user", "content": eval_prompt},
-            ],
-            temperature=0.0,
-            timeout=60,
-        )
-    except APITimeoutError as e:
-        # This will catch timeouts from the request_timeout parameter
-        print(f"OpenAI API request timed out: {e}, with {modelname}, index {index}, 60 sec timeout, and prompt={eval_prompt}")
-        return None
-    except Exception as e:
-        # Optionally catch other errors
-        print(f"Some other error occurred: {e}")
-        return None
+    response = model.run( eval_prompt,
+                          system_prompt="You are a strict grader. Respond with only the number.",
+                          temperature  = 0.0 )
 
 ### We may want to return 0.0 above to be consistent with below
 
     # Extract the numeric score from the assistant's response
-    # raw_score = response["choices"][0]["message"]["content"].strip()
-    raw_score = response.choices[0].message.content.strip()
+    print('RRRRRR', response)
     try:
-        score = float(raw_score)
+        score = float(response)
     except ValueError:
-        print('XX ERROR:', raw_score)
+        print('XX ERROR:', response)
         # If the model didn't return a pure number, attempt a fallback or default to 0
         score = 0.0
     
     return score
 
 
-def get_model_parameters(model):
-    # if model == 'mistralai/Mistral-7B-Instruct-v0.3':
-    if model in alcf_chat_models:
-        key      = alcf_access_token
-        endpoint = 'https://data-portal-dev.cels.anl.gov/resource_server/sophia/vllm/v1'
-    elif model == 'gpt-4o':
-        key      = openai_access_token
-        endpoint = OPENAI_EP
-    else:
-        print('Bad model:', model)
-        print('Valid models are:', alcf_chat_models)
-        exit(1)
-    return (model, key, endpoint)
-
-
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Program to use LLM B to rate answers provided previously by LLM A') 
-    parser.add_argument('-a','--modelA', help='modelA', required=True)
-    parser.add_argument('-b','--modelB', help='modelB', required=True)
+    parser.add_argument('-a','--modelA_name', help='modelA name', required=True)
+    parser.add_argument('-b','--modelB_name', help='modelB name', required=True)
     parser.add_argument('-o','--output', help='Output directory', required=True)
-    parser.add_argument('-z','--zero',   help='Process empty files', action="store_true")
+    parser.add_argument('-f','--force',  help='Process even if score file exists', action="store_true")
     args = parser.parse_args()
 
     output_dir   = args.output
 
-    modelA_name = args.modelA
-    modelB_name = args.modelB
-    modelB      = get_model_parameters(modelB_name)
+    modelA_name = args.modelA_name
+    modelB_name = args.modelB_name
+    modelB      = Model(modelB_name)
 
     # Load previously generated answers from modelA
     answer_file = output_dir+'/answers_'+modelA_name.replace('/', '+')+'.json'
@@ -125,9 +76,8 @@ def main():
         exit(1)
 
     score_file = f'{output_dir}/scores_{modelA_name.replace("/","+")}:{modelB_name.replace("/","+")}.json'
-    print(f'Looking for {score_file}')
-    if os.path.exists(score_file) and not args.zero:
-        print('Already exists:', score_file)
+    if os.path.exists(score_file) and not args.force:
+        print('Score file already exists:', score_file)
         exit(1)
 
     out_f = open(score_file, 'w', encoding='utf-8') 
@@ -164,12 +114,12 @@ def main():
         # Use model to evaluate/grade the generated answer in file
         # against the reference answer
         eval_answer_start_time = time.time()
-        score = evaluate_answer(index, modelB, question, reference_answer, model_answer)
+        score = score_answer(index, modelB, question, reference_answer, model_answer)
         eval_answer_time = time.time() - eval_answer_start_time
         eval_answer_total_time += eval_answer_time
         if score != None:
             scores.append(score)
-            qa_pairs.append({'modelA': modelA_name, 'modelB': modelB[0], 'index': index, 'question': question, 'reference':reference_answer, 'model':model_answer, 'score':score, 'gen_time': gen_time, 'eval_time': f'{eval_answer_time:.4f}', 'file':file, 'filenum':filenum, 'chunknum':chunknum})
+            qa_pairs.append({'modelA': modelA_name, 'modelB': modelB_name, 'index': index, 'question': question, 'reference':reference_answer, 'model':model_answer, 'score':score, 'gen_time': gen_time, 'eval_time': f'{eval_answer_time:.4f}', 'file':file, 'filenum':filenum, 'chunknum':chunknum})
 
         total_time += time.time() - start_time
         start_time = time.time()
