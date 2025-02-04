@@ -1,0 +1,16 @@
+#!/bin/bash
+#PBS -N my_model_job
+#PBS -l nodes=1
+#PBS -l walltime=01:00:00
+#PBS -o output.log
+#PBS -q debug
+#PBS -A superbert
+#PBS -l filesystems=eagle:home:grand
+
+module use /soft/modulefiles; module load conda; conda activate IAN; cd /eagle/argonne_tpc/IanFoster/SFT/sample-code
+
+echo "Starting model server on compute node $(hostname)..."
+
+# Run the Python model server
+python model_server.py
+
