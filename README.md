@@ -35,13 +35,16 @@ python select_mcqs_at_random.py -i <MCQ-JSON-file> -o <MCQ-JSON-file> -n <N>
 
 # 4) Use specified LLM to generate answers to MCQs generated in step 2
 #    Read MCQs in <input-json>
-#    Place results in "<result-directory>/answers_<model-A>.json"
-python generate_answers.py -i <input-json> -o <result-directory> -m <model>
+#    Use LLM <model>, executed at <locn> (see below), to generate MCQs.
+#    Place results in "<result-directory>/answers_<model>.json"
+#    
+python generate_answers.py -i <input-json> -o <result-directory> -m <locn>:<model>
 
 # 5) Use specified LLM to score answers to MCQs generated in step 4
 #    Look for file "answers_<model-A>.json" in <result-directory>
-#    Produce file "scores_<model-A>_<model-B>.json"
-python score_answers.py -o <result-directory> -a <model-A> -b <model-B>
+#    Produce file "scores_<locnA>:<model-A>:<locnA>:<model-B>.json", with any `/` replaced with `+`.
+#    Where <model-A> and <model-B> are executed at <locn-A> and <locn-B>, respectively.
+python score_answers.py -o <result-directory> -a <locn-A>:<model-A> -b <locn-B>:<model-B>
 
 # 6) Run whatever LLMs are running on ALCF inference service to generate and/or score answers
 #    (Based on:
@@ -51,7 +54,30 @@ python review_status.py -i <MCQ-JSON-file> -o <result-directory>
 ```
 
 Note:
-* You need a file `openai_access_token.txt` that contains your OpenAI access token if you are to use `gpt-4o`.
+* You need a file `openai_access_token.txt` that contains your OpenAI access token if you are to use an OpenAI model like `gpt-4o`.
+
+Examples of running `generate_answers.py`:
+* `python generate_answers.py -o RESULTS -i MCQs.json -m openai:o1-mini.json`
+  * Uses the OpenAI model `o1-mini` to generate answers for MCQs in `MCQs.json` and stores results in the `RESULTS` directory, in a file named `answers_openai:o1-mini.json`
+* `python generate_answers.py -o RESULTS -i MCQs.json -m "pb:argonne-private/AuroraGPT-IT-v4-0125`
+  * Uses the Huggingface model `argonne-private/AuroraGPT-IT-v4-0125`, running on a Polaris compute node started via PBS, to generate answers for the same MCQs. Results are placed in `RESULTS/answers_pb:argonne-private+AuroraGPT-IT-v4-0125.json`
+ 
+Examples of running `score_answers.py`:
+* `python score_answers.py -o RESULTS -i MCQs.json -a openai:o1-mini.json -b openai:gpt-4o`
+  * Uses the OpenAI model `gpt-4o` to score answers for MCQs in `MCQs.json` and stores results in `RESULTS` directory, in a file named `answers_openai:o1-mini.json`
+* `python score_answers.py -o RESULTS -a pb:argonne-private/AuroraGPT-IT-v4-0125 -b openai:gpt-4o`
+  * Uses the OpenAI model gpt-4o to score answers previously generated for model `pb:argonne-private/AuroraGPT-IT-v4-0125`, and assumed to be located in a file `RESULTS/answers_pb:argonne-private+AuroraGPT-IT-v4-0125.json`, as above. Places results in file `RESULTS/scores_pb:argonne-private+AuroraGPT-IT-v4-0125:openai:gpt-4o.json`.
+ 
+
+## Notes on different model execution locations
+
+The code supports the following model execution locations:
+* **alcf**: Model served by the ALCF Inference Service. You need an ALCF project to charge to.
+* **hf**: Huggingface model downloaded and run on Polaris login node (not normally a good thing).
+* **pb**: Huggingface model downloaded and run on a Polaris compute node. You need an ALCF project to charge to.
+* **vllm**: Huggingface model downloaded and run via VLLM on Polaris compute node. Not sure that works at present.
+* **openai**: An OpenAI model, like gpt-4o or o1-mini. You need an OpenAI account to charge to.
+
 
 ## Code for fine-tuning programs
 ```
