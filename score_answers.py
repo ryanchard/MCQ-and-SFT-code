@@ -42,12 +42,11 @@ how well the User's Answer matches the Reference Answer. No extra text.
 ### We may want to return 0.0 above to be consistent with below
 
     # Extract the numeric score from the assistant's response
-    print('RRRRRR', response)
     try:
         score = float(response)
     except ValueError:
-        print('XX ERROR:', response)
         # If the model didn't return a pure number, attempt a fallback or default to 0
+        print('Score of 0 for bad response', response)
         score = 0.0
     
     return score
@@ -105,9 +104,9 @@ def main():
 
         if not question or not reference_answer or not model_answer:
             print('Bad item:')
-            print('QQQ', question)
-            print('RRR', reference_answer)
-            print('MMM', model_answer)
+            print('Question ', question)
+            print('Reference', reference_answer)
+            print('Model    ', model_answer)
             exit(1)
             continue  # skip malformed items
 

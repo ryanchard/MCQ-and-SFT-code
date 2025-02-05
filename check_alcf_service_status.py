@@ -27,9 +27,6 @@ if len(sys.argv) > 1:
     print(f'Full status: {status}\n')
 
 def get_models(status, status1, status2):
-    if status.startswith('Error'):
-        print(status)
-        return []
     models = status[status1]
     model_list = []
     for model in models:

@@ -8,6 +8,8 @@ import time  # For timing
 from openai import OpenAI
 import spacy
 
+from model_access import Model
+
 from inference_auth_token import get_access_token
 alcf_access_token = get_access_token()
         
@@ -110,12 +112,14 @@ def generate_mcqs(model, path, filename, linenum, chunks: list) -> list:
             f"Return the result as plain text labeled 'augmented_chunk:' at the start."
         )
 
+        """
         (modelname, key, ep) = model
         client = OpenAI(
             api_key  = key,
             base_url = ep
         )
 
+        # Skip the old recovery code as it isn't in the Model class
         try:
             response_1 = client.chat.completions.create(
                 model=modelname,
@@ -128,7 +132,9 @@ def generate_mcqs(model, path, filename, linenum, chunks: list) -> list:
 
             # Attempt to parse out the augmented chunk from the model's response
             step1_output = response_1.choices[0].message.content.strip()
-            
+        """
+        try:
+            step1_output = model.run(user_prompt=user_message, system_prompt=system_message)
             # We'll assume the model starts with "augmented_chunk:"
             augmented_chunk = step1_output
             if "augmented_chunk:" in step1_output.lower():
@@ -138,7 +144,6 @@ def generate_mcqs(model, path, filename, linenum, chunks: list) -> list:
                     flags=re.IGNORECASE,
                     maxsplit=1
                 )[-1].strip()
-
         except Exception as e:
             print(f"Error summarizing and expanding chunk: {e}")
             continue
@@ -164,6 +169,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list) -> list:
             f"augmented_chunk:\n{augmented_chunk}\n"
         )
 
+        """
         try:
             response_2 = client.chat.completions.create(
                 model=modelname,
@@ -174,6 +180,9 @@ def generate_mcqs(model, path, filename, linenum, chunks: list) -> list:
                 temperature=0.7,
             )
             generated_question = response_2.choices[0].message.content.strip()
+        """
+        try:
+            generated_question = model.run(user_prompt=user_message_2, system_prompt=system_message_2)
         except Exception as e:
             print(f"Error generating question: {e}")
             continue
@@ -200,6 +209,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list) -> list:
             f'{{"answer":"...","score":9}}'
         )
 
+        """
         try:
             response_3 = client.chat.completions.create(
                 model=modelname,
@@ -210,7 +220,10 @@ def generate_mcqs(model, path, filename, linenum, chunks: list) -> list:
                 temperature=0.7,
             )
             step3_output = response_3.choices[0].message.content.strip()
+        """    
 
+        try:
+            step3_output = model.run(user_prompt=user_message_3, system_prompt=system_message_3)
             step3_output = step3_output.replace("```json", "")
             step3_output = step3_output.replace("```", "")
             step3_output = step3_output.replace('\\"', "XXXABCXXX")
@@ -233,7 +246,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list) -> list:
                     "path": path,
                     "line": linenum,
                     "chunk": chunknum,
-                    "model": modelname,
+                    "model": model.model_name,
                     "question": generated_question,
                     "answer": model_answer,
                     "text": augmented_chunk
@@ -252,6 +265,8 @@ def generate_mcqs(model, path, filename, linenum, chunks: list) -> list:
             {step3_output}
             """
             try:
+                fixed_json_output = model.run(system_prompt="You are a strict JSON converter.", user_prompt=fix_prompt)
+                """
                 fix_response = client.chat.completions.create(
                     model=modelname,
                     messages=[
@@ -261,6 +276,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list) -> list:
                     temperature=0.0,
                 )
                 fixed_json_output = fix_response.choices[0].message.content.strip()
+                """
                 parsed_json = json.loads(fixed_json_output)
                 model_answer = parsed_json.get("answer", "").strip()
                 model_score = parsed_json.get("score", 0)
@@ -434,13 +450,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Program to generate MCQs from JSONL or JSON files')
     parser.add_argument('-i','--input', help='QA input file', required=True)
     parser.add_argument('-o','--output', help='Output directory', required=True)
-    parser.add_argument('-m','--model', help='Model to use to generate MCQs', default='gpt-4o')
+    parser.add_argument('-m','--model', help='Model to use to generate MCQs', default='openai:gpt-4o')
     args = parser.parse_args()
                                             
     input_directory = args.input
     output_json     = args.output
 
     model_name = args.model
-    model      = get_model_parameters(model_name)
+    model = Model(model_name)
+    model.details()
+
     os.makedirs(output_json, exist_ok=True)
     process_directory(model, input_directory, output_json)

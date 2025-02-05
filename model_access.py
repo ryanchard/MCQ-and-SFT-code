@@ -187,7 +187,7 @@ class Model:
             self.client_socket.close()
             self.client_socket = None
 
-    def run(self, question: str, system_prompt='You are a helpful assistant', temperature=0.7) -> str:
+    def run(self, user_prompt='Tell me something interesting', system_prompt='You are a helpful assistant', temperature=0.7) -> str:
         """
         Calls model (configured with MODEL_NAME, ENDPOINT_MODEL, API_KEY_MODEL)
         to generate an answer to the given question.
@@ -198,7 +198,7 @@ class Model:
     
         if self.model_type == 'Huggingface':
             #print('Calling HF model', hf_info)
-            response = run_hf_model(question, self.base_model, self.tokenizer)
+            response = run_hf_model(user_prompt, self.base_model, self.tokenizer)
             #print('HF response =', response)
             return response
 
@@ -209,8 +209,8 @@ class Model:
             if self.client_socket is None:
                 raise RuntimeError("Socket is not connected")
     
-            #print(f"Sending input to model: {question}")
-            self.client_socket.sendall(question.encode())
+            #print(f"Sending input to model: {user_prompt}")
+            self.client_socket.sendall(user_prompt.encode())
 
             # Receive response
             response = self.client_socket.recv(1024).decode()
@@ -223,7 +223,7 @@ class Model:
                 "model": self.model_name,
                 "messages": [
                              {"role": "system", "content": system_prompt},
-                             {"role": "user", "content": question}
+                             {"role": "user", "content": user_prompt}
                             ],
                 'temperature': self.temperature
             }
@@ -252,13 +252,13 @@ class Model:
             # For chat models:
             if self.model_type == 'OpenAI' and self.model_name[:2] == 'o1':
                 messages=[
-                    {"role": "user", "content": question},
+                    {"role": "user", "content": user_prompt},
                 ]
                 temperature = 1.0
             else:
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": question},
+                    {"role": "user", "content": user_prompt},
                 ]
                 temperature=self.temperature
 
