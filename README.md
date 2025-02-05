@@ -70,8 +70,12 @@ Examples of running `score_answers.py`:
  
 
 ## Notes on different model execution locations
-
-The code supports the following model execution locations:
+The class `Model` (in `model_access.py`) implements init and run methods that allow for use of different models. 
+```
+model = Model(modelname)
+response = model.run(user_prompt='Tell me something interesting')
+```
+where `modelname` has a prefix indicating the model type/location:
 * **alcf**: Model served by the ALCF Inference Service. You need an ALCF project to charge to.
 * **hf**: Huggingface model downloaded and run on Polaris login node (not normally a good thing).
 * **pb**: Huggingface model downloaded and run on a Polaris compute node. You need an ALCF project to charge to.
