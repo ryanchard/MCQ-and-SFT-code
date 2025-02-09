@@ -55,9 +55,9 @@ See [https://github.com/7shoe/AdaParse/tree/main](https://github.com/7shoe/AdaPa
 and augmenting each chunk with extra info. In this example we will specify the
 *allenai/Llama-3.1-Tulu-3-405B* model (see 
 [alcf endpoints](https://github.com/argonne-lcf/inference-endpoints) 
-for more options)
+for more options) running at locn="alcf"
 ```
-python generate_mcqs.py -i myJSONdir -o MCQ-JSON-file -m 'mistralai/Mistral-7B-Instruct-v0.3'
+python generate_mcqs.py -i myJSONdir -o MCQ-JSON-file -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
 ```
 
 + Next is useful if you run `generate_mcqs.py` multiple times and thus have multiple JSON files
