@@ -8,11 +8,20 @@ def get_names_of_alcf_chat_models(alcf_access_token):
     }
 
     try:
-        # Set a timeout so that the request doesn't hang indefinitely
+        # Use a timeout to avoid hanging indefinitely
         response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()  # Raise an exception for HTTP errors
-    except requests.exceptions.RequestException as e:
-        print("Could not connect. Check network connectivity and you must be local or connected via VPN", flush=True)
+        response.raise_for_status()  # Raise HTTPError for bad responses (4xx, 5xx)
+    except requests.exceptions.HTTPError as http_err:
+        # Provide a brief error message that includes the status code and error message
+        if response.status_code in (401, 403):
+            print("Authentication error: Please check your access token.", flush=True)
+        else:
+            print(f"HTTP error occurred: {http_err}", flush=True)
+        exit(1)
+    except requests.exceptions.RequestException as req_err:
+        # This block catches connection errors, timeouts, DNS failures, etc.
+        print("Could not connect. Check network connectivity and ensure you are local or connected via VPN.", flush=True)
+        print("Error details:", str(req_err), flush=True)
         exit(1)
 
     try:
@@ -33,8 +42,12 @@ def get_alcf_inference_service_model_queues(alcf_access_token):
     try:
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        print("Could not connect. Check network connectivity and you must be local or connected via VPN", flush=True)
+    except requests.exceptions.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err}", flush=True)
+        exit(1)
+    except requests.exceptions.RequestException as req_err:
+        print("Could not connect. Check network connectivity and ensure you are local or connected via VPN.", flush=True)
+        print("Error details:", str(req_err), flush=True)
         exit(1)
 
     try:
