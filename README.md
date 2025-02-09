@@ -1,4 +1,4 @@
-## (this page under construction)
+## <span style="color: red;">(this page under construction)</span>
 
 # Code for MCQ-based evaluation, etc.
 
