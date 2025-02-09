@@ -1,4 +1,9 @@
-# generate_mcqs_config.yaml
+# this was a thought experiment but I am having second thoughts, as a config.yaml makes sense
+# only if you are expecting to infrequently change things, whereas the current command line
+# args approach is more amenable to scripts where you are (e.g.) using different models.
+#
+# CeC Feb 2025
+# # generate_mcqs_config.yaml
 
 api:
   openai_endpoint: "https://api.openai.com/v1"
