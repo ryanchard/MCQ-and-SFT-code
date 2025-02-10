@@ -58,7 +58,17 @@ See [https://github.com/7shoe/AdaParse/tree/main](https://github.com/7shoe/AdaPa
 and augmenting each chunk with extra info. In this example we will specify the
 *allenai/Llama-3.1-Tulu-3-405B* model (see 
 [alcf endpoints](https://github.com/argonne-lcf/inference-endpoints) 
-for more options) running at locn="alcf"
+for more options) running at locn="alcf".
+
+(if not already done) Download the script to manage access tokens:
+```
+wget https://raw.githubusercontent.com/argonne-lcf/inference-endpoints/refs/heads/main/inference_auth_token.py
+```
+and authenticate:
+```
+python inference_auth_token.py authenticate
+```
+Now you should be able to use a model to generate MCQs:
 ```
 python generate_mcqs.py -i myJSONdir -o MCQ-JSON-file -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
 ```
