@@ -11,19 +11,19 @@ alcf_chat_models = get_names_of_alcf_chat_models(alcf_access_token)
 
 def extract_model_a_from_scores_file_name(folder, file):
     part1 = file.split(f'{folder}/scores_')[1]
-    part2 = part1.split(':')[0]
+    part2 = part1.split('=')[0]
     return part2.replace('+', '/')
 
 
 def extract_model_a_from_answers_file_name(folder, file):
     part1 = file.split(f'{folder}/answers_')[1]
-    part2 = part1.split(':')[0]
+    part2 = part1.split('=')[0]
     return part2.replace('+', '/')
 
 
 def extract_model_b_from_scores_file_name(folder, file):
     part1 = file.split(f'{folder}/scores_')[1]
-    part2 = part1.split(':')[1]
+    part2 = part1.split('=')[1]
     part3 = part2.split('.json')[0]
     return part3.replace('+', '/')
 
@@ -40,13 +40,19 @@ If a modelA has already been run once and scored with one modelB, it can be resc
 """
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='Program to run LLM B to rate answers provided by LLM A')
+    parser = argparse.ArgumentParser(description='Program to run LLMs to generate and score answers to MCQs')
     parser.add_argument('-i','--inputs', help='MCQ file', required=True)
     parser.add_argument('-o','--outputdir', help='Directory to look for run results', required=True)
     parser.add_argument('-s','--silent', help='Just show things to run', action='store_true')
     parser.add_argument('-x','--execute', help='Execute commands', action='store_true')
     parser.add_argument('-m','--more', help='Also look at non-running/queued models', action='store_true')
+    parser.add_argument('-c', "--cache-dir", type=str, default=os.getenv("HF_HOME"), help="Custom cache directory for Hugging Face")
     args = parser.parse_args()
+
+    # Set HF_HOME if using custom cache directory
+    if args.cache_dir:
+        os.environ["HF_HOME"] = args.cache_dir
+        print(f"Using Hugging Face cache directory: {args.cache_dir}")
 
     # Folder containing the output files
     inputs = args.inputs
@@ -59,13 +65,16 @@ def main():
     running_model_list = [model for model in running_model_list if model in alcf_chat_models]
     running_model_list = [model for model in running_model_list if 'batch' not in model]
     running_model_list = [model for model in running_model_list if 'auroragpt-0.1-chkpt' not in model]
-    running_model_list = [model for model in running_model_list if model != 'N/A'] + ['gpt-4o']
+    running_model_list = [model for model in running_model_list if model != 'N/A']
+    running_model_list = ['alcf:'+model for model in running_model_list]
+    queued_model_list = ['alcf:'+model for model in queued_model_list]
+    running_model_list += ['pb:argonne-private/AuroraGPT-Tulu3-SFT-0125', 'pb:argonne-private/AuroraGPT-IT-v4-0125', 'openai:gpt-4o']
 
     # List available generated answers
     answers_files = [file.replace('.json', '') for file in glob.glob(f'{folder}/answers_*')]
+    print('ANSWER_FILES:', answers_files)
     if not silent:
         print(f'\nReviewing answers and scores files in {folder}, looking for MCQs not answered and/or scored with running models.')
-        #print(f'\nFocused on currently running models, minus mgoin/Nemotron-4-340B-Instruct-hf (slow) and auroragpt-0.1-chkpt-* (buggy):\n')
 
     models_scored = {}
 
@@ -84,7 +93,8 @@ def main():
             score_files = glob.glob(f'{folder}/scores_{model_a.replace("/","+")}:*')
             m_list = []
             for score_file in score_files:
-                f = score_file.split(f'{folder}/scores_{model_a.replace("/","+")}:')[1]
+                print('SF', score_file)
+                f = score_file.split(f'{folder}/scores_{model_a.replace("/","+")}=')[1]
                 model_b = f.split("_")[0].replace('+','/').replace('.json','')
                 print(f'\t{model_b}')
                 m_list.append(model_b)

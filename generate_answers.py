@@ -12,6 +12,17 @@ import argparse
 
 from model_access import Model
 
+"""
+import hydra
+from omegaconf import DictConfig
+
+@hydra.main(config_path=".", config_name="config", version_base=None)
+def main(cfg: DictConfig):
+    print(cfg.general.noise_threshold)  # Accessing config values
+
+if __name__ == "__main__":
+    main()
+"""
 
 # ---------------------------------------------------------------------
 def main():
@@ -21,7 +32,13 @@ def main():
     parser.add_argument('-o','--output', help='Output directory', required=True)
     parser.add_argument('-s','--start', help='Number to start at in MCQs file', default='0')
     parser.add_argument('-e','--end', help='End number in MCQs file', default='all')
+    parser.add_argument('-c', "--cache-dir", type=str, default=os.getenv("HF_HOME"), help="Custom cache directory for Hugging Face")
     args = parser.parse_args()
+
+    # Set HF_HOME if using custom cache directory
+    if args.cache_dir:
+        os.environ["HF_HOME"] = args.cache_dir
+        print(f"Using Hugging Face cache directory: {args.cache_dir}")
 
     json_file = args.input
     output_dir   = args.output

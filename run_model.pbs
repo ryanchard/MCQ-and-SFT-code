@@ -6,6 +6,7 @@
 #PBS -q debug
 #PBS -A superbert
 #PBS -l filesystems=eagle:home:grand
+#PBS -V
 
 module use /soft/modulefiles; module load conda; conda activate IAN; cd /eagle/argonne_tpc/IanFoster/SFT/sample-code
 
