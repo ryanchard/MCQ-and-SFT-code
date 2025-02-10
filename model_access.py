@@ -3,7 +3,6 @@
 import sys
 import json
 import os
-#import statistics
 import subprocess
 import re
 import time
@@ -11,9 +10,6 @@ import socket
 import requests
 import openai
 from openai import OpenAI
-#import time
-
-# import torch
 
 
 # ---------------------------------------------------------------------
