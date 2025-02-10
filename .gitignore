@@ -1,0 +1,35 @@
+*.swp
+*_access_token.txt
+inference_auth_token.py
+wandb
+        .review_status.py.swp
+        AuroraGPT-IT-v4-0125.gguf
+        MCQ_FILE
+        NOTES
+        SFT-outputs/
+        T/
+        T1/
+        TT/
+        Test_Answers_and_Scores/
+        Test_MCQs.json
+        XXX/
+        __pycache__/
+        batch.sh
+        config.yaml
+        generate_facts.py
+        hf_access_token.txt
+        inference_auth_token.py
+        install_vllm.sh
+        my_model_job.e3145860
+        my_model_job.e3145866
+        openai_access_token.txt
+        output.log
+        pbs_run_models.py
+        run_all.py
+        run_hf_model.py
+        run_model.sh
+        run_via_pbs.py
+        score_answers.py.old
+        test.py
+        wandb/
+        wget-log
