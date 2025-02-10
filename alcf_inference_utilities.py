@@ -19,7 +19,8 @@ def get_names_of_alcf_chat_models(alcf_access_token):
             print(f"HTTP error occurred: {http_err}", flush=True)
         exit(1)
     except requests.exceptions.RequestException as req_err:
-        # This block catches connection errors, timeouts, DNS failures, etc.
+        # CeC added this block to catch connection errors, timeouts, DNS failures, etc.
+        #     such as when remote and not on VPN, which previously threw 100 lines of traceback at you
         print("Could not connect. Check network connectivity and ensure you are local or connected via VPN.", flush=True)
         print("Error details:", str(req_err), flush=True)
         exit(1)
