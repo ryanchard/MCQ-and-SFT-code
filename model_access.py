@@ -25,7 +25,7 @@ from alcf_inference_utilities import get_names_of_alcf_chat_models
 # Initialize the shared globals for ALCF models.
 ALCF_ACCESS_TOKEN = get_access_token()
 ALCF_CHAT_MODELS = get_names_of_alcf_chat_models(ALCF_ACCESS_TOKEN)
-print("DEBUG (model_access.py): ALCF_CHAT_MODELS is", ALCF_CHAT_MODELS, flush=True)
+#print("DEBUG (model_access.py): ALCF_CHAT_MODELS is", ALCF_CHAT_MODELS, flush=True)
 # --- CeC --- #
 
 OPENAI_EP  = 'https://api.openai.com/v1'
@@ -136,7 +136,7 @@ class Model:
 
             if self.model_name not in ALCF_CHAT_MODELS:
                 print('Bad ALCF model', self.model_name)
-            exit(1)
+                exit(1)
             self.model_type = 'ALCF'
             self.endpoint = 'https://data-portal-dev.cels.anl.gov/resource_server/sophia/vllm/v1'
     
