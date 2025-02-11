@@ -17,6 +17,10 @@ from openai import OpenAI
 # ---------------------------------------------------------------------
 
 # --- CeC --- #
+# I am getting an error "Error summarizing and expanding chunk: name 'APITimeoutError' is not defined"
+# so will see if defining it will make headway...
+from exceptions import APITimeoutError
+
 # centralize to a single authoritative alcf_chat_models list
 
 from inference_auth_token import get_access_token
