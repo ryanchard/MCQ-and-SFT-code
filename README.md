@@ -91,6 +91,12 @@ To generate MCQs from parsed JSON files:
    ```
 
 2. **Run MCQ generation:**
+You may wish to check to see which models are currently running as waiting for a model to load can
+take 10-15 minutes (see 
+[ALCF Inference service](https://github.com/argonne-lcf/inference-endpoints)). For this example
+we are using `Mistral-7B-Instruct-v0.3`.
+
+
    ```bash
    python generate_mcqs.py -i myJSONdir -o myJSON-MCQdir -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
    ```
@@ -114,10 +120,13 @@ python select_mcqs_at_random.py -i MCQ-JSON-file -o Selected-MCQs.json -n 17
 ---
 
 ### 6. Generate AI-Powered Answers for MCQs
-This step uses an AI model to generate **new answers** for the selected MCQs.
+This step uses an AI model to generate **new answers** for the selected MCQs. We will
+use a differnet model than above here. Note the form for specifying the model is 
+`<locn>:<model>` and in this example we will use `meta-llama/Meta-Llama-3-70B-Instruct`,
+whose endpoint is running at <locn> = `alcf`..
 
 ```bash
-python generate_answers.py -i Selected-MCQs.json -o myRESULTSdir -m <locn>:<model>
+python generate_answers.py -i Selected-MCQs.json -o myRESULTSdir -m alcf:meta-llama/Meta-Llama-3-70B-Instruct
 ```
 - **Input:** `Selected-MCQs.json` (or `MCQ-JSON-file` if no subset was chosen).
 - **Output:** `myRESULTSdir/answers_<model>.json` (AI-generated answers).
@@ -214,7 +223,11 @@ python run_missing_generates.py -o <result-directory>
 
 ### More on `check_alcf_service_status.py` 
 
-The program `check_alcf_service_status.py` retrieves and processes status information from the [ALCF Inference service](https://github.com/argonne-lcf/inference-endpoints), and lists models currently running or queued to run. E.g., as follows, which shows six models running and one queued. Models that are not accessed for some period are shut down and queued models started. A request to a model that is not running adds it to the queue.
+The program `check_alcf_service_status.py` retrieves and processes status information from the
+[ALCF Inference service](https://github.com/argonne-lcf/inference-endpoints),
+and lists models currently running or queued to run. E.g., as follows, which shows six
+models running and one queued. Models that are not accessed for some period are shut
+down and queued models started. A request to a model that is not running adds it to the queue.
 ```
 % python check_alcf_service_status.py
 Running: ['meta-llama/Meta-Llama-3-70B-Instruct', 'meta-llama/Meta-Llama-3-8B-Instruct', 'mistralai/Mistral-7B-Instruct-v0.3']
