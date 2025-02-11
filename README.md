@@ -27,7 +27,7 @@ Details on programs follow. Use `-h` to learn about other options.
 + Create your directories
 
 ```
-mkdir myPDFdir myJSONdir
+mkdir myPDFdir myJSONdir myJSON-MCQdir myRESULTSdir 
 ```
 
 + Populate your myPDFdir directory with your PDF files.
@@ -70,7 +70,7 @@ python inference_auth_token.py authenticate
 ```
 Now you should be able to use a model to generate MCQs:
 ```
-python generate_mcqs.py -i myJSONdir -o MCQ-JSON-files -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
+python generate_mcqs.py -i myJSONdir -o myJSON-MCQdir -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
 ```
 
 + Next is useful if you run `generate_mcqs.py` multiple times and thus have multiple JSON files
@@ -80,7 +80,7 @@ python combine_json_files.py -i myJSONdir -o JSON-file
 
 4. Select subset of MCQs from output of step 2, for subsequent use
 ```
-python select_mcqs_at_random.py -i MCQ-JSON-file -o MCQ-JSON-file -n <N>
+python select_mcqs_at_random.py -i myJSON-MCQdir -o myJSON-MCQdir -n <N>
 ```
 
 5. Use specified LLM to generate answers to MCQs generated in step 2
@@ -89,7 +89,7 @@ Use LLM <model>, executed at <locn> (see below), to generate MCQs.
 Place results in "<result-directory>/answers_<model>.json"
 
 ```
-python generate_answers.py -i MCQ-JSON-file -o myRESULTSdir -m <locn>:<model>
+python generate_answers.py -i myJSON-MCQdir -o myRESULTSdir -m <locn>:<model>
 ```
 
 6. Use specified LLM to score answers to MCQs generated in step 4
