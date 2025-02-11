@@ -1,7 +1,12 @@
 # Changelog
 
+## v1.2 11Feb (CeC)
+- added jq to environment for easy reading json
+- added step to check what models are runnign prior to firing off generate\_mcqs
+- verified (on MacOS CLI) that the entire workflow example, steps 1-8, works
+  though there are various errors to be expected (with imperfect data).
 
-## 10Feb (CeC)
+## v1.1 10Feb (CeC)
 - alcf\_inference\_utilities.py - Modified to exit with simple error message in cases where
   no network path available (such as not being local to ALCF or on VPN), avoiding
   100 lines of traceback.
