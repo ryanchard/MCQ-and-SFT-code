@@ -135,11 +135,13 @@ python generate_answers.py -i Selected-MCQs.json -o myRESULTSdir -m 'alcf:meta-l
 
 ### 7. Score AI-Generated Answers
 An AI model evaluates and scores the generated answers against reference answers. Here we
-will use `alcf:mistralai/Mistral-7B-Instruct-v0.3`
-to evaluate the answers we created in the previous step with `alcf:meta-llama/Meta-Llama-3-70B-Instruct`
+will use
+`alcf:mistralai/Mistral-7B-Instruct-v0.3`
+to evaluate the answers we created in the previous step with
+`alcf:meta-llama/Meta-Llama-3-70B-Instruct`
 
 ```bash
-python score_answers.py -o myRESULTSdir -a 'alcf:mistralai/Mistral-7B-Instruct-v0.3' -b 'alcf:meta-llama/Meta-Llama-3-70B-Instruct'
+python score_answers.py -o myRESULTSdir -a 'alcf:meta-llama/Meta-Llama-3-70B-Instruct' -b 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
 ```
 - **Input:** `myRESULTSdir/answers_<model-A>.json`
 - **Output:** `myRESULTSdir/scores_<locn-A>:<model-A>_<locn-B>:<model-B>.json`
