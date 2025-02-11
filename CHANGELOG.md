@@ -1,7 +1,7 @@
 # Changelog
 
 
-## 10Feb (CeC)
+## Version 0.1 - 10Feb (CeC)
 - alcf\_inference\_utilities.py - Modified to exit with simple error message in cases where
   no network path available (such as not being local to ALCF or on VPN), avoiding
   100 lines of traceback.
