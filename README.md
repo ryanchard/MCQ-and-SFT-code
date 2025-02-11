@@ -14,21 +14,31 @@ Please email foster@anl.gov and stevens@anl.gov if you see things that are uncle
 **Before you start:** We recommend you follow the instructions for 
 [ALCF Inference Service Prerequisites](https://github.com/argonne-lcf/inference-endpoints?tab=readme-ov-file#%EF%B8%8F-prerequisites)
 to set up your ALCF auth token, required to access models via the inference service.
-(You need to download and run `inference_auth_token.py`.)
+(You need to download and run `inference_auth_token.py`.
 
 ## Code for generating and evaluating MCQs
 
+Clone this repository.
+```bash
+git clone git@github.com:auroraGPT-ANL/MCQ-and-SFT-code.git
+cd MCQ-and-SFT-code
+```
+
 ### Workflow Overview
-This pipeline transforms scientific papers in **PDF format** into **multiple-choice questions (MCQs)**, generates **AI-powered answers**, and scores those answers using another AI model.
+This pipeline converts scientific papers in **PDF format** into JSON and then uses AI models
+of your choice to generate **multiple-choice questions (MCQs)**, **answers**,
+and **scores** of those answers.
 
 **Workflow Steps:**
-1. Convert PDFs to JSON text.
-2. Generate MCQs from parsed text.
+1. Convert PDFs to JSON representations.
+2. Generate MCQs from JSON representations.
 3. Combine multiple MCQ JSON files (if needed).
 4. Select a subset of MCQs.
-5. Generate AI-powered answers for MCQs.
+5. Generate additonal  answers for MCQs (using a different model than
+used to generate the initial MCQs and answers).
 6. Score AI-generated answers using another AI model.
 7. Review the status of MCQ generation and scoring.
+
 
 ---
 
@@ -40,16 +50,22 @@ Ensure your working directory has subdirectories for storing input and output fi
 - `myJSON-MCQdir/` → Stores **generated MCQs in JSON format**.
 - `myRESULTSdir/` → Stores **AI-generated answers and scores**.
 
-If needed, create these directories manually:
+If you're just starting (and don't already have these or equivalent directories),
+, create these directories manually. If yours are named differently, substitute your
+directory names as you follow the instruction sequence below::
 ```bash
 mkdir myPDFdir myJSONdir myJSON-MCQdir myRESULTSdir
 ```
-(**Note:** Many scripts create their output directories automatically if they don’t already exist.)
+(**Note:** Some of the scripts below create their output directories automatically if they don’t
+already exist, but we will create them just to be sure..)
+
+At this stage you'll want to place some papers in PDF form into **myPDFdir**.
 
 ---
 
 ### 2. Set Up and Activate Your Conda Environment
-If you already set up a Conda environment, update it with the latest dependencies:
+If you already have a Conda environment you want to keep using, update it with 
+any missing dependencies needed for this workflow:
 ```bash
 conda env update --name <your_conda_env> --file environment.yml
 ```
@@ -58,7 +74,8 @@ Otherwise, create a new Conda environment:
 conda env create -f environment.yml
 conda activate globus_env
 ```
-(**Note:** If you get `CondaValueError: prefix already exists`, rename the environment in `environment.yml`.)
+(**Note:** If you get `CondaValueError: prefix already exists`, edit`environment.yml` and change the `name:`,
+then create and activate that env.)
 
 ---
 
@@ -67,10 +84,8 @@ Extract text from PDFs using a simple parser:
 ```bash
 python simple_parse.py -i myPDFdir -o myJSONdir
 ```
-Alternatively, you can use **AdaParse** (higher-quality parser, still in testing):
-```bash
-# More details: https://github.com/7shoe/AdaParse/tree/main
-```
+Alternatively, you can use **AdaParse** (higher-quality parser, still in testing). 
+[More details](https://github.com/7shoe/AdaParse/tree/main)
 
 ---
 
@@ -82,14 +97,34 @@ To generate MCQs from parsed JSON files:
    wget https://raw.githubusercontent.com/argonne-lcf/inference-endpoints/refs/heads/main/inference_auth_token.py
    python inference_auth_token.py authenticate
    ```
-
-2. **Run MCQ generation:**
+2. **(Optional) Check which models are running**
+You may wish to check to see which models are currently running as waiting for a model to load can
+take 10-15 minutes (see 
+[ALCF Inference service](https://github.com/argonne-lcf/inference-endpoints)). Get the list of running
+and queued models as follows:
    ```bash
-   python generate_mcqs.py -i myJSONdir -o myJSON-MCQdir -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
+   access_token=$(python inference_auth_token.py get_access_token)
+   curl -X GET "https://data-portal-dev.cels.anl.gov/resource_server/sophia/jobs" \
+       -H "Authorization: Bearer ${access_token}" | jq
+   ```
+Piping the output to ``jq`` (Command-line JSON processor) makes it much easier to read.
+
+3. **Run MCQ generation:**
+You may wish to check to see which models are currently running as waiting for a model to load can
+take 10-15 minutes (see 
+[ALCF Inference service](https://github.com/argonne-lcf/inference-endpoints)).
+For this example
+we are using `Mistral-7B-Instruct-v0.3`.
+
+
+   ```bash
+   python generate_mcqs.py -i myJSONdir \
+        -o myJSON-MCQdir \
+        -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
    ```
    - This script divides text into **chunks**, **generates MCQs**, and **includes reference answers**.
 
-3. **(Optional) Combine multiple MCQ JSON files into a single file:**
+4. **(Optional) Combine multiple MCQ JSON files into a single file:**
    ```bash
    python combine_json_files.py -i myJSON-MCQdir -o MCQ-JSON-file
    ```
@@ -97,19 +132,25 @@ To generate MCQs from parsed JSON files:
 ---
 
 ### 5. Select a Subset of MCQs for Further Processing
-If you want to randomly select a subset of MCQs from the generated JSON files:
+If you want to randomly select a subset of MCQs from the generated JSON files, use 
+`select_mcqs_at_random.py`, specifying the number of MCQs to select.  For example, to select
+17 MCQs::
 ```bash
-python select_mcqs_at_random.py -i MCQ-JSON-file -o Selected-MCQs.json -n <N>
+python select_mcqs_at_random.py -i MCQ-JSON-file -o Selected-MCQs.json -n 17
 ```
-- `<N>` specifies the number of MCQs to select.
 
 ---
 
-### 6. Generate AI-Powered Answers for MCQs
-This step uses an AI model to generate **new answers** for the selected MCQs.
+### 6. Generate Answers for MCQs Using a Different Model
+This step uses an AI model to generate **new answers** for the selected MCQs. We will
+use a differnet model than above here. Note the form for specifying the model is 
+`<locn>:<model>` and in this example we will use `meta-llama/Meta-Llama-3-70B-Instruct`,
+whose endpoint is running at <locn> = `alcf`..
 
 ```bash
-python generate_answers.py -i Selected-MCQs.json -o myRESULTSdir -m <locn>:<model>
+python generate_answers.py -i Selected-MCQs.json \
+       -o myRESULTSdir \
+       -m 'alcf:meta-llama/Meta-Llama-3-70B-Instruct'
 ```
 - **Input:** `Selected-MCQs.json` (or `MCQ-JSON-file` if no subset was chosen).
 - **Output:** `myRESULTSdir/answers_<model>.json` (AI-generated answers).
@@ -117,14 +158,19 @@ python generate_answers.py -i Selected-MCQs.json -o myRESULTSdir -m <locn>:<mode
 ---
 
 ### 7. Score AI-Generated Answers
-An AI model evaluates and scores the generated answers against reference answers.
+An AI model evaluates and scores the generated answers against reference answers. Here we
+will use
+`alcf:mistralai/Mistral-7B-Instruct-v0.3`
+to evaluate the answers we created in the previous step with
+`alcf:meta-llama/Meta-Llama-3-70B-Instruct`
 
 ```bash
-python score_answers.py -o myRESULTSdir -a <locn-A>:<model-A> -b <locn-B>:<model-B>
+python score_answers.py -o myRESULTSdir \
+       -a 'alcf:meta-llama/Meta-Llama-3-70B-Instruct' \
+       -b 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
 ```
 - **Input:** `myRESULTSdir/answers_<model-A>.json`
 - **Output:** `myRESULTSdir/scores_<locn-A>:<model-A>_<locn-B>:<model-B>.json`
-- **Purpose:** Uses **model-B** to grade the answers generated by **model-A**.
 - **Note:** Any `/` in model names is replaced with `+` in filenames.
 
 ---
@@ -138,12 +184,10 @@ python review_status.py -i MCQ-JSON-file -o myRESULTSdir
 
 ---
 
-## Final Notes
+## Additional Notes
 - This pipeline ensures **high-quality multiple-choice questions** are generated and scored using AI.
 - The steps allow for **comparison of AI-generated answers against reference answers**.
 - The scoring step provides a **numerical evaluation (1-10)** of answer accuracy.
-
-**CeC edits stop here**
 
 **Note:**
 * You need a file *openai_access_token.txt* that contains your OpenAI access token if you
@@ -206,7 +250,11 @@ python run_missing_generates.py -o <result-directory>
 
 ### More on `check_alcf_service_status.py` 
 
-The program `check_alcf_service_status.py` retrieves and processes status information from the [ALCF Inference service](https://github.com/argonne-lcf/inference-endpoints), and lists models currently running or queued to run. E.g., as follows, which shows six models running and one queued. Models that are not accessed for some period are shut down and queued models started. A request to a model that is not running adds it to the queue.
+The program `check_alcf_service_status.py` retrieves and processes status information from the
+[ALCF Inference service](https://github.com/argonne-lcf/inference-endpoints),
+and lists models currently running or queued to run. E.g., as follows, which shows six
+models running and one queued. Models that are not accessed for some period are shut
+down and queued models started. A request to a model that is not running adds it to the queue.
 ```
 % python check_alcf_service_status.py
 Running: ['meta-llama/Meta-Llama-3-70B-Instruct', 'meta-llama/Meta-Llama-3-8B-Instruct', 'mistralai/Mistral-7B-Instruct-v0.3']
