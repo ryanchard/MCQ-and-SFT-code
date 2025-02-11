@@ -98,8 +98,7 @@ and queued models as follows:
    ```bash
    access_token=$(python inference_auth_token.py get_access_token)
    curl -X GET "https://data-portal-dev.cels.anl.gov/resource_server/sophia/jobs" \
-       -H "Authorization: Bearer ${access_token}" \ 
-       | jq
+       -H "Authorization: Bearer ${access_token}" | jq
    ```
 Piping the output to ``jq`` (Command-line JSON processor) makes it much easier to read.
 
