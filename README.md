@@ -57,7 +57,8 @@ At this stage you'll want to place some papers in PDF form into **myPDFdir**.
 ---
 
 ### 2. Set Up and Activate Your Conda Environment
-If you already set up a Conda environment, update it with the latest dependencies:
+If you already have a Conda environment you want to keep using, update it with 
+any missing dependencies needed for this workflow:
 ```bash
 conda env update --name <your_conda_env> --file environment.yml
 ```
@@ -97,8 +98,10 @@ and queued models as follows:
    ```bash
    access_token=$(python inference_auth_token.py get_access_token)
    curl -X GET "https://data-portal-dev.cels.anl.gov/resource_server/sophia/jobs" \
-       -H "Authorization: Bearer ${access_token}"
+       -H "Authorization: Bearer ${access_token}" \ 
+       | jq
    ```
+Piping the output to ``jq`` (Command-line JSON processor) makes it much easier to read.
 
 3. **Run MCQ generation:**
 You may wish to check to see which models are currently running as waiting for a model to load can
