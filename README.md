@@ -121,14 +121,16 @@ python select_mcqs_at_random.py -i MCQ-JSON-file -o Selected-MCQs.json -n 17
 
 ---
 
-### 6. Generate AI-Powered Answers for MCQs
+### 6. Generate Answers for MCQs Using a Different Model
 This step uses an AI model to generate **new answers** for the selected MCQs. We will
 use a differnet model than above here. Note the form for specifying the model is 
 `<locn>:<model>` and in this example we will use `meta-llama/Meta-Llama-3-70B-Instruct`,
 whose endpoint is running at <locn> = `alcf`..
 
 ```bash
-python generate_answers.py -i Selected-MCQs.json -o myRESULTSdir -m 'alcf:meta-llama/Meta-Llama-3-70B-Instruct'
+python generate_answers.py -i Selected-MCQs.json \
+       -o myRESULTSdir \
+       -m 'alcf:meta-llama/Meta-Llama-3-70B-Instruct'
 ```
 - **Input:** `Selected-MCQs.json` (or `MCQ-JSON-file` if no subset was chosen).
 - **Output:** `myRESULTSdir/answers_<model>.json` (AI-generated answers).
@@ -143,7 +145,9 @@ to evaluate the answers we created in the previous step with
 `alcf:meta-llama/Meta-Llama-3-70B-Instruct`
 
 ```bash
-python score_answers.py -o myRESULTSdir -a 'alcf:meta-llama/Meta-Llama-3-70B-Instruct' -b 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
+python score_answers.py -o myRESULTSdir \
+       -a 'alcf:meta-llama/Meta-Llama-3-70B-Instruct' \
+       -b 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
 ```
 - **Input:** `myRESULTSdir/answers_<model-A>.json`
 - **Output:** `myRESULTSdir/scores_<locn-A>:<model-A>_<locn-B>:<model-B>.json`
