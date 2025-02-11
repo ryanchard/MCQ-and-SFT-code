@@ -16,9 +16,21 @@ alcf_access_token = get_access_token()
 from alcf_inference_utilities import get_names_of_alcf_chat_models
 alcf_chat_models = get_names_of_alcf_chat_models(alcf_access_token)
 
-OPENAI_EP  = 'https://api.openai.com/v1'
-with open('openai_access_token.txt', 'r') as file:
-    openai_access_token = file.read().strip()
+# CeC: temporarily remove seems not needed if using alcf and some people
+# may not hvae an openai tokan; will need to restore this but fix it
+# so that it's skipped if not needed, but for now concentrating on 
+# working on improvements related to ALCF
+#OPENAI_EP  = 'https://api.openai.com/v1'
+#with open('openai_access_token.txt', 'r') as file:
+#    openai_access_token = file.read().strip()
+
+# CeC: define timeout and catch them assuming user does not want to wait...
+from exceptions import APITimeoutError
+
+class APITimeoutError(Exception):
+    """Custom exception to indicate an API timeout."""
+    pass
+
 
 ##############################################################################
 # Global constants
@@ -144,6 +156,9 @@ def generate_mcqs(model, path, filename, linenum, chunks: list) -> list:
                     flags=re.IGNORECASE,
                     maxsplit=1
                 )[-1].strip()
+        except APITimeoutError: # CeC added, see comments up top
+            print("Request timed out; check endpoint status")
+            sys.exit(1)
         except Exception as e:
             print(f"Error summarizing and expanding chunk: {e}")
             continue

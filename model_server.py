@@ -1,10 +1,13 @@
 import socket
 import time
+import os
 
 HOST = socket.gethostname()
 PORT = 50007
 
-print(f"Model server running on {HOST}:{PORT}")
+cache_dir = os.getenv("HF_HOME")
+
+print(f"Model server running on {HOST}:{PORT} with cache directory {cache_dir}")
 
 # Create a socket (TCP)
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -15,7 +18,6 @@ print("HFMS: Waiting for incoming connections...")
 
 conn, addr = server_socket.accept()
 print(f"HFMS: Connected by {addr}")
-
 
 model_type = 'Huggingface'
 
@@ -43,12 +45,13 @@ login(key)
 max_seq_length = 2048  # e.g. for models that support RoPE scaling
 
 # Define the model and tokenizer
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=cache_dir)
 
 # Load base model with quantization
 base_model = AutoModelForCausalLM.from_pretrained(
     model_name,
     device_map="auto",
+    cache_dir=cache_dir
 )
 
 # Ensure pad token is set correctly

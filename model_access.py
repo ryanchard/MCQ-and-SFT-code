@@ -33,6 +33,9 @@ ALCF_CHAT_MODELS = get_names_of_alcf_chat_models(ALCF_ACCESS_TOKEN)
 # --- CeC --- #
 
 OPENAI_EP  = 'https://api.openai.com/v1'
+#cache_dir  = '/eagle/argonne_tpc/IanFoster/.cache'
+
+#os.environ["HF_HOME"] = cache_dir
 
 
 class Model:
@@ -92,6 +95,8 @@ class Model:
                 AutoTokenizer
             )
 
+            cache_dir = os.getenv("HF_HOME")
+
             self.model_name = model_name.split('hf:')[1]
             print('\nHF model running locally:', model_name)
             self.endpoint = 'http://huggingface.co'
@@ -103,12 +108,13 @@ class Model:
             max_seq_length = 2048  # e.g. for models that support RoPE scaling
     
             # Define the model and tokenizer
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, cache_dir=cache_dir)
     
             # Load base model with quantization
             self.base_model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
                 device_map="auto",
+                cache_dir=cache_dir
             )
     
             # Ensure pad token is set correctly
@@ -306,35 +312,6 @@ class Model:
             print('Unknown model type:', self.model_type)
             exit(1)
     
-
-def initialize_hf_model(model_name):
-    with open("hf_access_token.txt", "r") as file:
-        hf_access_token = file.read().strip()
-    login(hf_access_token)
-
-    max_seq_length = 2048  # e.g. for models that support RoPE scaling
-
-    # Define the model and tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-    # Load base model with quantization
-    base_model = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        device_map="auto",
-    )
-
-    # Ensure pad token is set correctly
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-
-    # Ensure model has correct pad token ID
-    base_model.config.pad_token_id = tokenizer.pad_token_id
-
-    # Ensure tokenizer uses correct padding side
-    tokenizer.padding_side = "right"  # Recommended for LLaMA
-
-    return(base_model, tokenizer)
-
 
 def run_hf_model(input_text, base_model, tokenizer):
     # Prepare input for generation
