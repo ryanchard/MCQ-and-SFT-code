@@ -14,9 +14,15 @@ Please email foster@anl.gov and stevens@anl.gov if you see things that are uncle
 **Before you start:** We recommend you follow the instructions for 
 [ALCF Inference Service Prerequisites](https://github.com/argonne-lcf/inference-endpoints?tab=readme-ov-file#%EF%B8%8F-prerequisites)
 to set up your ALCF auth token, required to access models via the inference service.
-(You need to download and run `inference_auth_token.py`.)
+(You need to download and run `inference_auth_token.py`.
 
 ## Code for generating and evaluating MCQs
+
+Clone this repository.
+```bash
+git clone git@github.com:auroraGPT-ANL/MCQ-and-SFT-code.git
+cd MCQ-and-SFT-code
+```
 
 ### Workflow Overview
 This pipeline converts scientific papers in **PDF format** into JSON and then uses AI models
@@ -32,6 +38,7 @@ and **scores** of those answers.
 used to generate the initial MCQs and answers).
 6. Score AI-generated answers using another AI model.
 7. Review the status of MCQ generation and scoring.
+
 
 ---
 
@@ -177,12 +184,10 @@ python review_status.py -i MCQ-JSON-file -o myRESULTSdir
 
 ---
 
-## Final Notes
+## Additional Notes
 - This pipeline ensures **high-quality multiple-choice questions** are generated and scored using AI.
 - The steps allow for **comparison of AI-generated answers against reference answers**.
 - The scoring step provides a **numerical evaluation (1-10)** of answer accuracy.
-
-**CeC edits stop here**
 
 **Note:**
 * You need a file *openai_access_token.txt* that contains your OpenAI access token if you
