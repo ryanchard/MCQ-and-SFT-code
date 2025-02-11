@@ -68,7 +68,7 @@ conda env create -f environment.yml
 conda activate globus_env
 ```
 (**Note:** If you get `CondaValueError: prefix already exists`, edit`environment.yml` and change the `name:`,
-ten activate that env after creating it.)
+then create and activate that env.)
 
 ---
 
