@@ -98,7 +98,8 @@ we are using `Mistral-7B-Instruct-v0.3`.
 
 
    ```bash
-   python generate_mcqs.py -i myJSONdir -o myJSON-MCQdir -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
+   python generate_mcqs.py -i myJSONdir -o myJSON-MCQdir \
+        -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
    ```
    - This script divides text into **chunks**, **generates MCQs**, and **includes reference answers**.
 
