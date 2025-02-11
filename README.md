@@ -66,7 +66,8 @@ Otherwise, create a new Conda environment:
 conda env create -f environment.yml
 conda activate globus_env
 ```
-(**Note:** If you get `CondaValueError: prefix already exists`, rename the environment in `environment.yml`.)
+(**Note:** If you get `CondaValueError: prefix already exists`, edit`environment.yml` and change the `name:`,
+ten activate that env after creating it.)
 
 ---
 
@@ -103,11 +104,12 @@ To generate MCQs from parsed JSON files:
 ---
 
 ### 5. Select a Subset of MCQs for Further Processing
-If you want to randomly select a subset of MCQs from the generated JSON files:
+If you want to randomly select a subset of MCQs from the generated JSON files, use 
+`select_mcqs_at_random.py`, specifying the number of MCQs to select.  For example, to select
+17 MCQs::
 ```bash
-python select_mcqs_at_random.py -i MCQ-JSON-file -o Selected-MCQs.json -n <N>
+python select_mcqs_at_random.py -i MCQ-JSON-file -o Selected-MCQs.json -n 17
 ```
-- `<N>` specifies the number of MCQs to select.
 
 ---
 
