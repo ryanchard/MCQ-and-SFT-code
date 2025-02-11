@@ -44,7 +44,8 @@ If needed, create these directories manually:
 ```bash
 mkdir myPDFdir myJSONdir myJSON-MCQdir myRESULTSdir
 ```
-(**Note:** Many scripts create their output directories automatically if they don’t already exist.)
+(**Note:** Some of the scripts below create their output directories automatically if they don’t
+already exist, but we will create them just to be sure..)
 
 ---
 
