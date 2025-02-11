@@ -17,6 +17,7 @@ dependencies:
   - wheel=0.45.1=py311hca03da5_0
   - xz=5.4.6=h80987f9_1
   - zlib=1.2.13=h18a0788_1
+  - jq
   - pip:
       - annotated-types==0.7.0
       - anyio==4.8.0
