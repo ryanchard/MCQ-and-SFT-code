@@ -89,11 +89,22 @@ To generate MCQs from parsed JSON files:
    wget https://raw.githubusercontent.com/argonne-lcf/inference-endpoints/refs/heads/main/inference_auth_token.py
    python inference_auth_token.py authenticate
    ```
-
-2. **Run MCQ generation:**
+2. **(Optional) Check which models are running**
 You may wish to check to see which models are currently running as waiting for a model to load can
 take 10-15 minutes (see 
-[ALCF Inference service](https://github.com/argonne-lcf/inference-endpoints)). For this example
+[ALCF Inference service](https://github.com/argonne-lcf/inference-endpoints)). Get the list of running
+and queued models as follows:
+   ```bash
+   access_token=$(python inference_auth_token.py get_access_token)
+   curl -X GET "https://data-portal-dev.cels.anl.gov/resource_server/sophia/jobs" \
+       -H "Authorization: Bearer ${access_token}"
+   ```
+
+3. **Run MCQ generation:**
+You may wish to check to see which models are currently running as waiting for a model to load can
+take 10-15 minutes (see 
+[ALCF Inference service](https://github.com/argonne-lcf/inference-endpoints)).
+For this example
 we are using `Mistral-7B-Instruct-v0.3`.
 
 
@@ -104,7 +115,7 @@ we are using `Mistral-7B-Instruct-v0.3`.
    ```
    - This script divides text into **chunks**, **generates MCQs**, and **includes reference answers**.
 
-3. **(Optional) Combine multiple MCQ JSON files into a single file:**
+4. **(Optional) Combine multiple MCQ JSON files into a single file:**
    ```bash
    python combine_json_files.py -i myJSON-MCQdir -o MCQ-JSON-file
    ```
