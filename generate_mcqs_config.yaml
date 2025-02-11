@@ -1,0 +1,69 @@
+# this was a thought experiment but I am having second thoughts, as a config.yaml makes sense
+# only if you are expecting to infrequently change things, whereas the current command line
+# args approach is more amenable to scripts where you are (e.g.) using different models.
+#
+# CeC Feb 2025
+# # generate_mcqs_config.yaml
+
+api:
+  openai_endpoint: "https://api.openai.com/v1"
+  openai_access_token_file: "openai_access_token.txt"
+  alcf_model_endpoint: "https://data-portal-dev.cels.anl.gov/resource_server/sophia/vllm/v1"
+
+chunking:
+  chunk_size: 1000
+  spacy_model: "en_core_web_sm"
+
+prompts:
+  summarization_system: "You are a helpful assistant that summarizes text in bullet points and expands on them using your broader knowledge. Name this result 'augmented_chunk'."
+  summarization_user: >
+    Given the following chunk of text, please:
+    1. Summarize the text in bullet points.
+    2. Expand on the summary using your parametric knowledge.
+    Chunk:
+    {chunk}
+    Return the result as plain text labeled 'augmented_chunk:' at the start.
+    
+  mcq_generation_system: "You are a helpful assistant that generates exactly ONE multiple-choice question based on the provided text (augmented_chunk). The question must have 5 possible answers, numbered 1 to 5. Exactly one of these 5 choices is correct. Mark the correct choice with '(*)' at the end for later grading."
+  mcq_generation_user: >
+    Below is some content called augmented_chunk.
+    Please:
+    1) Create exactly one multiple-choice question that can be answered by the augmented_chunk.
+    2) Provide five distinct options (1 to 5) as answers.
+    3) Mark the correct answer with '(*)' at the end of that particular option.
+    Constraints:
+    - The question and answers must be self-contained and understandable without referencing the chunk.
+    - Do not mention 'chunk' or 'augmented_chunk' or 'article' or 'study' in the final output.
+    augmented_chunk:
+    {augmented_chunk}
+    
+  verification_system: "You are a helpful assistant that evaluates how well an answer matches the question in context of the augmented_chunk. Return your answer and a score from 1 to 10 in JSON form like: {\"answer\":\"...\",\"score\":9}"
+  verification_user: >
+    augmented_chunk:
+    {augmented_chunk}
+    
+    question:
+    {question}
+    
+    Please provide:
+    1. An appropriate answer to the multiple-choice question above. Your answer should identify which option is correct and why.
+    2. A single integer 'score' from 1 to 10 for how well the answer addresses the question based on the augmented_chunk.
+    
+    Output must be valid JSON in the form: {"answer":"...","score":9}
+  
+  json_fix_system: "You are a strict JSON converter."
+  json_fix_user: >
+    Convert the following text strictly into valid JSON of the form: {"answer":"...","score":9} 
+    Nothing else, no additional text.
+    TEXT TO FIX:
+    {text_to_fix}
+
+scoring:
+  score_threshold: 7
+
+generation:
+  temperature: 0.7
+
+defaults:
+  model: "openai:gpt-4o"
+

@@ -15,6 +15,23 @@ from openai import OpenAI
 # ---------------------------------------------------------------------
 # Configuration constants for model/endpoint/API keys
 # ---------------------------------------------------------------------
+
+# --- CeC --- #
+# I am getting an error "Error summarizing and expanding chunk: name 'APITimeoutError' is not defined"
+# so will see if defining it will make headway...
+from exceptions import APITimeoutError
+
+# centralize to a single authoritative alcf_chat_models list
+
+from inference_auth_token import get_access_token
+from alcf_inference_utilities import get_names_of_alcf_chat_models
+
+# Initialize the shared globals for ALCF models.
+ALCF_ACCESS_TOKEN = get_access_token()
+ALCF_CHAT_MODELS = get_names_of_alcf_chat_models(ALCF_ACCESS_TOKEN)
+#print("DEBUG (model_access.py): ALCF_CHAT_MODELS is", ALCF_CHAT_MODELS, flush=True)
+# --- CeC --- #
+
 OPENAI_EP  = 'https://api.openai.com/v1'
 #cache_dir  = '/eagle/argonne_tpc/IanFoster/.cache'
 
@@ -114,16 +131,23 @@ class Model:
             self.model_name = model_name.split('alcf:')[1]
             print('\nALCF Inference Service Model:', self.model_name)
 
-            from inference_auth_token import get_access_token
-            self.key = get_access_token()
+            #from inference_auth_token import get_access_token
+            #self.key = get_access_token()
+#
+            #from alcf_inference_utilities import get_names_of_alcf_chat_models
+            #alcf_chat_models = get_names_of_alcf_chat_models(self.key)
+            #if self.model_name not in alcf_chat_models:
+                #print('Bad ALCF model', self.model_name)
+                #exit(1)
+            #self.model_type = 'ALCF'
+#
+            #self.endpoint = 'https://data-portal-dev.cels.anl.gov/resource_server/sophia/vllm/v1'
+            self.key = ALCF_ACCESS_TOKEN
 
-            from alcf_inference_utilities import get_names_of_alcf_chat_models
-            alcf_chat_models = get_names_of_alcf_chat_models(self.key)
-            if self.model_name not in alcf_chat_models:
+            if self.model_name not in ALCF_CHAT_MODELS:
                 print('Bad ALCF model', self.model_name)
                 exit(1)
             self.model_type = 'ALCF'
-
             self.endpoint = 'https://data-portal-dev.cels.anl.gov/resource_server/sophia/vllm/v1'
     
         elif model_name.startswith('openai'):
