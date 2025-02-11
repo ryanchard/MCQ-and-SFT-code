@@ -19,14 +19,17 @@ to set up your ALCF auth token, required to access models via the inference serv
 ## Code for generating and evaluating MCQs
 
 ### Workflow Overview
-This pipeline transforms scientific papers in **PDF format** into **multiple-choice questions (MCQs)**, generates **AI-powered answers**, and scores those answers using another AI model.
+This pipeline converts scientific papers in **PDF format** into JSON and then uses AI models
+of your choice to generate **multiple-choice questions (MCQs)**, **answers**,
+and **scores** of those answers.
 
 **Workflow Steps:**
-1. Convert PDFs to JSON text.
-2. Generate MCQs from parsed text.
+1. Convert PDFs to JSON representations.
+2. Generate MCQs from JSON representations.
 3. Combine multiple MCQ JSON files (if needed).
 4. Select a subset of MCQs.
-5. Generate AI-powered answers for MCQs.
+5. Generate additonal  answers for MCQs (using a different model than
+used to generate the initial MCQs and answers).
 6. Score AI-generated answers using another AI model.
 7. Review the status of MCQ generation and scoring.
 
@@ -40,12 +43,16 @@ Ensure your working directory has subdirectories for storing input and output fi
 - `myJSON-MCQdir/` → Stores **generated MCQs in JSON format**.
 - `myRESULTSdir/` → Stores **AI-generated answers and scores**.
 
-If needed, create these directories manually:
+If you're just starting (and don't already have these or equivalent directories),
+, create these directories manually. If yours are named differently, substitute your
+directory names as you follow the instruction sequence below::
 ```bash
 mkdir myPDFdir myJSONdir myJSON-MCQdir myRESULTSdir
 ```
 (**Note:** Some of the scripts below create their output directories automatically if they don’t
 already exist, but we will create them just to be sure..)
+
+At this stage you'll want to place some papers in PDF form into **myPDFdir**.
 
 ---
 
@@ -68,10 +75,8 @@ Extract text from PDFs using a simple parser:
 ```bash
 python simple_parse.py -i myPDFdir -o myJSONdir
 ```
-Alternatively, you can use **AdaParse** (higher-quality parser, still in testing):
-```bash
-# More details: https://github.com/7shoe/AdaParse/tree/main
-```
+Alternatively, you can use **AdaParse** (higher-quality parser, still in testing). 
+[More details](https://github.com/7shoe/AdaParse/tree/main)
 
 ---
 
