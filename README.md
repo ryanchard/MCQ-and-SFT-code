@@ -70,7 +70,7 @@ python inference_auth_token.py authenticate
 ```
 Now you should be able to use a model to generate MCQs:
 ```
-python generate_mcqs.py -i myJSONdir -o MCQ-JSON-file -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
+python generate_mcqs.py -i myJSONdir -o MCQ-JSON-files -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
 ```
 
 + Next is useful if you run `generate_mcqs.py` multiple times and thus have multiple JSON files
