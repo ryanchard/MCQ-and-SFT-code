@@ -109,6 +109,13 @@ and queued models as follows:
    ```
 Piping the output to ``jq`` (Command-line JSON processor) makes it much easier to read.
 
+**Notes**
+ - If you are not connected via VPN or to Argonne-auth at the lab then you'll get an error such as *curl: (6) Could not resolve host: data-portal-dev.cels.anl.gov*.
+ - If it's been a while since you authenticated, you'll get a "Permission denied" error. In this case, you'll need to re-authenticate:
+```
+python inference_auth_token.py authenticate --force
+```
+
 3. **Run MCQ generation:**
 You may wish to check to see which models are currently running as waiting for a model to load can
 take 10-15 minutes (see 
