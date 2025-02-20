@@ -117,11 +117,14 @@ python inference_auth_token.py authenticate --force
 ```
 
 3. **Run MCQ generation:**
-You may wish to check to see which models are currently running as waiting for a model to load can
-take 10-15 minutes (see 
+This step uses generate_mcqs.py to divide text into chunks, generate MCQs, and
+include reference answers.
+
+You may wish to check to see which models are currently running as waiting for
+a model to load can take 10-15 minutes (see 
 [ALCF Inference service](https://github.com/argonne-lcf/inference-endpoints)).
-For this example
-we are using `Mistral-7B-Instruct-v0.3`.
+For this example we are using `Mistral-7B-Instruct-v0.3`. Omitting the -m option
+defaults to *openai:gpt-4o*.
 
 
    ```bash
@@ -129,7 +132,6 @@ we are using `Mistral-7B-Instruct-v0.3`.
         -o myJSON-MCQdir \
         -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
    ```
-   - This script divides text into **chunks**, **generates MCQs**, and **includes reference answers**.
 
 4. **(Optional) Combine multiple MCQ JSON files into a single file:**
    ```bash
