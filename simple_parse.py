@@ -47,7 +47,7 @@ def extract_text_from_pdf(pdf_path: str) -> str:
                     text_content.append(page_text)
             return ("\n".join(text_content), 'PyPDF2')
         except:
-            print(f'ERROR extracting with PyPDF2 from {str}. Trying pdfminer.')
+            config.logger.warning(f'ERROR extracting with PyPDF2 from {str}. Trying pdfminer.')
             text = extract_text(pdf_path)
             return (text, 'pdfminer')
 
@@ -59,7 +59,7 @@ def process_directory(input_dir: str, output_dir: str = "output_files"):
     ]
     total_files = len(files)
     if total_files == 0:
-        print("No suitable files found in directory.")
+        config.logger.warning("No suitable files found in directory.")
         return
 
     # Iterate over files
@@ -70,10 +70,10 @@ def process_directory(input_dir: str, output_dir: str = "output_files"):
         out_file = basename + ".json"
         out_path  = os.path.join(output_dir, out_file)
         if os.path.isfile(out_path):
-            print(f'Already exists: {i}/{total_files}: {out_path}')
+            config.logger.warning(f'Already exists: {i}/{total_files}: {out_path}')
             continue
 
-        print(f"Processing file {i}/{total_files}: {file_path}")
+        config.logger.info(f"Processing file {i}/{total_files}: {file_path}")
 
         (text, parser) = extract_text_from_pdf(file_path)
 

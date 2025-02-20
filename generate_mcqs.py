@@ -126,7 +126,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
                     maxsplit=1
                 )[-1].strip()
         except Exception as e:
-            tqdm.write(f"Error summarizing and expanding chunk: {e}")
+            config.logger.info(f"Error summarizing and expanding chunk: {e}")
             pbar.update(1)
             continue
 
@@ -151,7 +151,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
         try:
             generated_question = model.run(user_prompt=user_message_2, system_prompt=system_message_2)
         except Exception as e:
-            tqdm.write(f"Error generating question: {e}")
+            config.logger.warning(f"Error generating question: {e}")
             pbar.update(1)
             continue
 
@@ -200,7 +200,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
                 })
 
         except json.JSONDecodeError:
-            logger.warning("JSON parsing failed. Trying to fix output...")
+            config.logger.warning("JSON parsing failed. Trying to fix output...")
             fix_prompt = f"""
             Convert the following text strictly into valid JSON of the form:
             {{"answer":"...","score":9}}
@@ -223,12 +223,12 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
                         "text": augmented_chunk
                     })
             except Exception as e:
-                tqdm.write(f"Could not fix JSON automatically: {e}")
+                config.logger.warning(f"Could not fix JSON automatically: {e}")
                 pbar.update(1)
                 continue
 
         except Exception as e:
-            tqdm.write(f"Error in verifying question/answer: {e}")
+            config.logger.warning(f"Error in verifying question/answer: {e}")
             pbar.update(1)
             continue
 
@@ -236,7 +236,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
         pbar.update(1)
 
     # Add a newline after processing all chunks in this call
-    tqdm.write("")
+    config.logger.info("")
     return qa_pairs
 
 def process_directory(model, input_dir: str, output_dir: str = "output_files"):
@@ -254,7 +254,7 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
     total_files = len(all_files)
 
     if total_files == 0:
-        tqdm.write("No suitable files found in directory.")
+        config.logger.warning("No suitable files found in directory.")
         return
 
     overall_start_time = time.time()
@@ -268,11 +268,11 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
             with open(file_path, 'r', encoding='utf-8') as file:
                 line_count = sum(1 for _ in file)
             line_counts.append(line_count)
-        tqdm.write(f'{len(jsonl_files)} JSONL files, with {sum(line_counts)} lines in total: {line_counts}')
+        config.logger.info(f'{len(jsonl_files)} JSONL files, with {sum(line_counts)} lines in total: {line_counts}')
 
     if len(json_files) > 0:
         approximate_chunk_count = approximate_total_chunks(input_dir, bytes_per_chunk=5000)
-        tqdm.write(f"\nTotal JSON files: {total_files}, ~{approximate_chunk_count} chunks\n")
+        config.logger.info(f"\nTotal JSON files: {total_files}, ~{approximate_chunk_count} chunks\n")
     else:
         # Fallback if only JSONL files exist (estimate by summing lines)
         approximate_chunk_count = sum(line_counts)
@@ -287,7 +287,7 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
         file_path = os.path.join(input_dir, filename)
         file_start_time = time.time()
 
-        tqdm.write(f"\nProcessing file {i}/{total_files}: {file_path}")
+        config.logger.info(f"\nProcessing file {i}/{total_files}: {file_path}")
 
         with open(file_path, 'r', encoding='utf-8') as file:
             if filename.lower().endswith(".json"):
@@ -297,11 +297,11 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
                 lines = file.readlines()
 
             for j, line in enumerate(lines, start=1):
-                tqdm.write(f"Processing line {j} of {len(lines)} in file {i}")
+                config.logger.info(f"Processing line {j} of {len(lines)} in file {i}")
                 try:
                     record = json.loads(line.strip())
                 except json.JSONDecodeError as e:
-                    tqdm.write(f"JSON decode error in file {filename} line {j}: {e}")
+                    config.logger.info(f"JSON decode error in file {filename} line {j}: {e}")
                     continue
 
                 text = record['text']
@@ -313,7 +313,7 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
                 all_prompt_answer_pairs.extend(prompt_answer_pairs)
 
         out_file = f'{output_dir}/file_{i}.json'
-        tqdm.write(f"Writing output for file {i} with {num_chunks} chunks to {out_file}")
+        config.logger.info(f"Writing output for file {i} with {num_chunks} chunks to {out_file}")
         with open(out_file, 'w', encoding='utf-8') as out_f:
             json.dump(all_prompt_answer_pairs, out_f, ensure_ascii=False, indent=2)
 
@@ -325,14 +325,14 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
         remaining_files = total_files - processed_count
         estimated_time_remaining = remaining_files * avg_time_per_file_so_far
 
-        tqdm.write(
+        config.logger.info(
             f"Time for this file: {human_readable_time(file_time_taken)} | "
             f"Processed: {processed_count}/{total_files} | "
             f"Estimated remaining: {human_readable_time(estimated_time_remaining)}"
         )
 
     total_time = time.time() - overall_start_time
-    tqdm.write(
+    config.logger.info(
         f"\nDone! Processed {processed_count}/{total_files} files in "
         f"{human_readable_time(total_time)}.\n"
         f"Prompt/answer pairs (score > 7) saved to {output_dir}."
@@ -340,7 +340,7 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
 
     if processed_count > 0:
         final_avg_time_per_file = total_time / processed_count
-        tqdm.write(f"Average time to process each file: {human_readable_time(final_avg_time_per_file)}")
+        config.logger.info(f"Average time to process each file: {human_readable_time(final_avg_time_per_file)}")
 
     # Close the progress bar
     pbar.close()
@@ -353,8 +353,8 @@ def get_model_parameters(model):
         key      = openai_access_token
         endpoint = OPENAI_EP
     else:
-        tqdm.write('Bad model:', model)
-        tqdm.write('Valid models are:', alcf_chat_models + 'gpt-4o')
+        config.logger.warning('Bad model:', model)
+        config.logger.warning('Valid models are:', alcf_chat_models + 'gpt-4o')
         exit(1)
     return (model, key, endpoint)
 
@@ -370,20 +370,7 @@ if __name__ == "__main__":
 
     input_directory = args.input
     output_json     = args.output
-    config.quietMode = args.quiet
-
-    if args.debug:
-        log_level = logging.DEBUG
-    elif args.warning:
-        log_level = logging.WARNING
-    else:
-        log_level = logging.INFO
-
-    logging.basicConfig(
-        level=log_level,
-        format='%(levelname)s: %(message)s'
-    )
-    logger = logging.getLogger(__name__)
+    config.set_quiet_mode(args.quiet)
 
     model_name = args.model
     model = Model(model_name)
@@ -394,6 +381,6 @@ if __name__ == "__main__":
     try:
         process_directory(model, input_directory, output_json)
     except KeyboardInterrupt:
-        tqdm.write("EXIT: Execution interrupted by user")
+        print("EXIT: Execution interrupted by user")
         sys.exit(0)
 
