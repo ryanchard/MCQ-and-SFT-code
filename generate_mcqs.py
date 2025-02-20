@@ -7,6 +7,8 @@ import re
 import time  # For timing
 from openai import OpenAI
 import spacy
+import argparse
+import config
 
 from model_access import Model
 
@@ -461,15 +463,18 @@ def get_model_parameters(model):
 
 
 if __name__ == "__main__":
-    import argparse
     parser = argparse.ArgumentParser(description='Program to generate MCQs from JSONL or JSON files')
     parser.add_argument('-i','--input', help='QA input file', required=True)
     parser.add_argument('-o','--output', help='Output directory', required=True)
-    parser.add_argument('-m','--model', help='Model to use to generate MCQs', default='openai:gpt-4o')
+    parser.add_argument('-m','--model', help='Model to use to generate MCQs',
+                        default='openai:gpt-4o')
+    parser.add_argument('-q','--quiet', help='Suppress informational msgs',
+                        action="store_true")
     args = parser.parse_args()
                                             
     input_directory = args.input
     output_json     = args.output
+    config.quietMode = args.quiet
 
     model_name = args.model
     model = Model(model_name)

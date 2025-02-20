@@ -6,6 +6,7 @@ import json
 import re
 import PyPDF2
 from pdfminer.high_level import extract_text
+import config
 
 
 def clean_string(s: str) -> str:

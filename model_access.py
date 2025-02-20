@@ -10,6 +10,7 @@ import socket
 import requests
 import openai
 from openai import OpenAI
+import config
 
 
 # ---------------------------------------------------------------------
