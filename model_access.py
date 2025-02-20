@@ -11,6 +11,7 @@ import requests
 import openai
 from openai import OpenAI
 import logging
+import config
 
 
 
