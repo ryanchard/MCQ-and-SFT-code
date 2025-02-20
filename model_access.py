@@ -10,6 +10,8 @@ import socket
 import requests
 import openai
 from openai import OpenAI
+import logging
+
 
 
 # ---------------------------------------------------------------------
@@ -20,16 +22,16 @@ from openai import OpenAI
 # I am getting an error "Error summarizing and expanding chunk: name 'APITimeoutError' is not defined"
 # so will see if defining it will make headway...
 from exceptions import APITimeoutError
+# for logging
+logger = logging.getLogger(__name__)
 
 # centralize to a single authoritative alcf_chat_models list
-
 from inference_auth_token import get_access_token
 from alcf_inference_utilities import get_names_of_alcf_chat_models
 
 # Initialize the shared globals for ALCF models.
 ALCF_ACCESS_TOKEN = get_access_token()
 ALCF_CHAT_MODELS = get_names_of_alcf_chat_models(ALCF_ACCESS_TOKEN)
-#print("DEBUG (model_access.py): ALCF_CHAT_MODELS is", ALCF_CHAT_MODELS, flush=True)
 # --- CeC --- #
 
 OPENAI_EP  = 'https://api.openai.com/v1'
@@ -219,13 +221,14 @@ class Model:
         to generate an answer to the given question.
         """
         
-        # Debug info
+        # Debug info (CeC: sseems the system logging level is warning so let's not fight it for now)
+        #logger.warning("Model details:")
         #self.details()
     
         if self.model_type == 'Huggingface':
-            #print('Calling HF model', hf_info)
+            print('Calling HF model', hf_info)
             response = run_hf_model(user_prompt, self.base_model, self.tokenizer)
-            #print('HF response =', response)
+            print('HF response =', response)
             return response
 
         elif self.model_type == 'HuggingfacePBS':
@@ -235,16 +238,16 @@ class Model:
             if self.client_socket is None:
                 raise RuntimeError("Socket is not connected")
     
-            #print(f"Sending input to model: {user_prompt}")
+            print(f"Sending input to model: {user_prompt}")
             self.client_socket.sendall(user_prompt.encode())
 
             # Receive response
             response = self.client_socket.recv(1024).decode()
-            #print(f"Received response from model: {response}")
+            print(f"Received response from model: {response}")
             return response
     
         elif self.model_type == 'vLLM':
-            #print('HERE')
+            print('HERE')
             data = {
                 "model": self.model_name,
                 "messages": [
@@ -254,17 +257,17 @@ class Model:
                 'temperature': self.temperature
             }
             try:
-                #print(f'Running {self.endpoint}\n\tHeaders = {self.headers}\n\tData = {json.dumps(data)}')
+                print(f'Running {self.endpoint}\n\tHeaders = {self.headers}\n\tData = {json.dumps(data)}')
                 response = requests.post(self.endpoint, headers=self.headers, data=json.dumps(data))
-                #print('Response:', response)
+                print('Response:', response)
                 response = response.json()
-                #print('JSON:', response)
+                print('JSON:', response)
                 message = response['choices'][0]['message']['content']
-                #print('MESSAGE:', message)
+                print('MESSAGE:', message)
                 #exit(1)
             except Exception as e:
                 print(f'Exception: {e}')
-                #exit(1)
+                exit(1)
                 message = ''
             return message
     
@@ -301,7 +304,6 @@ class Model:
                 return None
             except Exception as e:
                 # Optionally catch other errors
-                print(f"Some other error occurred: {e}")
                 return None
     
             # Extract the assistant's response
