@@ -360,20 +360,12 @@ def get_model_parameters(model):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Program to generate MCQs from JSONL or JSON files')
-<<<<<<< HEAD
     parser.add_argument('-i','--input', help='QA input file', required=True)
     parser.add_argument('-o','--output', help='Output directory', required=True)
     parser.add_argument('-m','--model', help='Model to use to generate MCQs',
                         default='openai:gpt-4o')
     parser.add_argument('-q','--quiet', help='Suppress informational msgs',
                         action="store_true")
-=======
-    parser.add_argument('-i','--input', help='QA input file',                required=True)
-    parser.add_argument('-o','--output',help='Output directory',             required=True)
-    parser.add_argument('-m','--model', help='Model to use to generate MCQs',default='openai:gpt-4o')
-    parser.add_argument('-w','--warning', help='Enable warning-level logging',   action='store_true')
-    parser.add_argument('-d','--debug', help='Enable debug-level logging',   action='store_true')
->>>>>>> c9df414310b0fe3f3c2bc5d962a362fc9c4f5153
     args = parser.parse_args()
 
     input_directory = args.input
