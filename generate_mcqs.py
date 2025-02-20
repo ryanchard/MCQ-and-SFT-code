@@ -26,6 +26,16 @@ alcf_chat_models = get_names_of_alcf_chat_models(alcf_access_token)
 CHUNK_SIZE = 1000  # approximate number of words per chunk
 
 
+# add a "no op" progress bar for quiet mode
+class NoOpTqdm:
+    """A do-nothing progress bar class that safely ignores all tqdm calls."""
+    def update(self, n=1):
+        pass
+    def set_postfix_str(self, s):
+        pass
+    def close(self):
+        pass
+
 ######
 # Functions
 ######
@@ -126,7 +136,10 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
                     maxsplit=1
                 )[-1].strip()
         except Exception as e:
-            config.logger.info(f"Error summarizing and expanding chunk: {e}")
+            config.logger.warning(f"Error summarizing and expanding chunk: {e}")
+            # Check for fatal errors
+            if "401" in str(e) or "Unauthorized" in str(e):
+                sys.exit("Model API Authentication failed. Exiting.")
             pbar.update(1)
             continue
 
@@ -152,6 +165,9 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
             generated_question = model.run(user_prompt=user_message_2, system_prompt=system_message_2)
         except Exception as e:
             config.logger.warning(f"Error generating question: {e}")
+            # Check for fatal errors
+            if "401" in str(e) or "Unauthorized" in str(e):
+                sys.exit("Model API Authentication failed. Exiting.")
             pbar.update(1)
             continue
 
@@ -181,7 +197,9 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
             step3_output = step3_output.replace("XXXABCXXX", '\\"')
 
             parsed_json = json.loads(step3_output)
-            model_answer = parsed_json.get("answer", "").strip()
+            #model_answer = parsed_json.get("answer", "").strip()
+            # replace line above with this one to force a string and save an exception when answer is an int
+            model_answer = str(parsed_json.get("answer", "")).strip()
             model_score = parsed_json.get("score", 0)
 
             # Instead of printing inline, update the progress bar postfix
@@ -278,7 +296,14 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
         approximate_chunk_count = sum(line_counts)
 
     # Create a global tqdm progress bar for chunk processing
-    pbar = tqdm(total=approximate_chunk_count, desc="Chunks processed", unit="chunk")
+#    pbar = tqdm(total=approximate_chunk_count, desc="Chunks processed", unit="chunk")
+    if config.get_quiet_mode():
+        # In quiet mode, we want to show the progress bar.
+        pbar = tqdm(total=approximate_chunk_count, desc="Chunks processed", unit="chunk")
+    else:
+        # In non-quiet mode, we suppress the progress bar.
+        pbar = NoOpTqdm()
+
 
     # Iterate over files
     for i, filename in enumerate(all_files, start=1):
@@ -342,8 +367,24 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
         final_avg_time_per_file = total_time / processed_count
         config.logger.info(f"Average time to process each file: {human_readable_time(final_avg_time_per_file)}")
 
+    # Final logging (after processing all files)
+    total_time = time.time() - overall_start_time
+    config.logger.info(
+        f"\nDone! Processed {processed_count}/{total_files} files in "
+        f"{human_readable_time(total_time)}.\n"
+        f"Prompt/answer pairs (score > 7) saved to {output_dir}."
+    )
+    if processed_count > 0:
+        final_avg_time_per_file = total_time / processed_count
+        config.logger.info(f"Average time to process each file: {human_readable_time(final_avg_time_per_file)}")
+
+    # Force the progress bar to complete by updating it to the total if necessary
+    remaining = pbar.total - pbar.n
+    if remaining > 0:
+        pbar.update(remaining)
     # Close the progress bar
     pbar.close()
+
 
 def get_model_parameters(model):
     if model in alcf_chat_models:
@@ -363,14 +404,21 @@ if __name__ == "__main__":
     parser.add_argument('-i','--input', help='QA input file', required=True)
     parser.add_argument('-o','--output', help='Output directory', required=True)
     parser.add_argument('-m','--model', help='Model to use to generate MCQs',
-                        default='openai:gpt-4o')
+                        default=config.defaultModel)
     parser.add_argument('-q','--quiet', help='Suppress informational msgs',
                         action="store_true")
     args = parser.parse_args()
 
+    #if args.quiet:
+    #    pbar = tqdm(total=100, desc="Processing", unit="chunk")  # ...and progress bar
+    #else:
+    #    pbar = NoOpTqdm()         # Default: Don't show progress bar (too noisy w/ INFO)
+
+    config.set_quiet_mode(args.quiet)
+    #logging.basicConfig(level=log_level, format='%(levelname)s: %(message)s')
+
     input_directory = args.input
     output_json     = args.output
-    config.set_quiet_mode(args.quiet)
 
     model_name = args.model
     model = Model(model_name)

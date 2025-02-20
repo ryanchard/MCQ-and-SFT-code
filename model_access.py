@@ -132,7 +132,7 @@ class Model:
     
         elif model_name.startswith('alcf'):
             self.model_name = model_name.split('alcf:')[1]
-            config.logger.info('\nALCF Inference Service Model:', self.model_name)
+            config.logger.info('\nALCF Inference Service Model: %s', self.model_name)
 
             #from inference_auth_token import get_access_token
             #self.key = get_access_token()
@@ -222,9 +222,8 @@ class Model:
         to generate an answer to the given question.
         """
         
-        # Debug info (CeC: sseems the system logging level is warning so let's not fight it for now)
-        config.logger.info("Model details:")
-        self.details()
+        #config.logger.info("Model details:")
+        #self.details()
     
         if self.model_type == 'Huggingface':
             config.logger.info('Calling HF model', hf_info)
@@ -305,6 +304,9 @@ class Model:
                 return None
             except Exception as e:
                 # Optionally catch other errors
+                # Check for fatal errors
+                if "401" in str(e) or "Unauthorized" in str(e):
+                    sys.exit("Model API Authentication failed. Exiting.")
                 return None
     
             # Extract the assistant's response
