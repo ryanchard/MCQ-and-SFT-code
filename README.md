@@ -44,9 +44,7 @@ and **scores** of those answers.
 6. Score AI-generated answers using another AI model.
 7. Review the status of MCQ generation and scoring.
 
-**
-[(flowchart for this workflow)](https://github.com/auroraGPT-ANL/MCQ-and-SFT-code/blob/CeC/MCQ-Workflow.png)
-**
+[**(flowchart for this workflow)**](https://github.com/auroraGPT-ANL/MCQ-and-SFT-code/blob/CeC/MCQ-Workflow.png)
 
 
 
