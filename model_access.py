@@ -13,17 +13,12 @@ from openai import OpenAI
 import logging
 import config
 
-
-
 # ---------------------------------------------------------------------
 # Configuration constants for model/endpoint/API keys
 # ---------------------------------------------------------------------
 
-# --- CeC --- #
-# I am getting an error "Error summarizing and expanding chunk: name 'APITimeoutError' is not defined"
-# so will see if defining it will make headway...
 from exceptions import APITimeoutError
-# for logging
+
 logger = logging.getLogger(__name__)
 
 # centralize to a single authoritative alcf_chat_models list
@@ -33,13 +28,8 @@ from alcf_inference_utilities import get_names_of_alcf_chat_models
 # Initialize the shared globals for ALCF models.
 ALCF_ACCESS_TOKEN = get_access_token()
 ALCF_CHAT_MODELS = get_names_of_alcf_chat_models(ALCF_ACCESS_TOKEN)
-# --- CeC --- #
 
 OPENAI_EP  = 'https://api.openai.com/v1'
-#cache_dir  = '/eagle/argonne_tpc/IanFoster/.cache'
-
-#os.environ["HF_HOME"] = cache_dir
-
 
 class Model:
     def __init__(self, model_name):
@@ -68,7 +58,7 @@ class Model:
             self.client_socket = None
 
             # Submit the PBS job and capture the job ID
-            config.logger.info(f'\nHuggingface model {self.model_name} to be run on HPC system: Starting model server.')
+            config.logger.info(f'Huggingface model {self.model_name} to be run on HPC system: Starting model server.')
             result = subprocess.run(["qsub", self.model_script], capture_output=True, text=True, check=True)
             self.job_id = result.stdout.strip().split(".")[0]  # Extract job ID
 
@@ -155,7 +145,7 @@ class Model:
     
         elif model_name.startswith('openai'):
             self.model_name = model_name.split('openai:')[1]
-            config.logger.info('\nOpenAI model to be run at OpenAI:', self.model_name)
+            config.logger.info('OpenAI model to be run at OpenAI:', self.model_name)
             self.model_type = 'OpenAI'
             #if self.model_name not in ['gpt-4o']:
             #    config.logger.warning('Bad OpenAI model', self.model_name)
