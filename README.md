@@ -30,14 +30,16 @@ of your choice to generate **multiple-choice questions (MCQs)**, **answers**,
 and **scores** of those answers.
 
 **Workflow Steps:**
-1. Convert PDFs to JSON representations.
-2. Generate MCQs from JSON representations.
-3. Combine multiple MCQ JSON files (if needed).
-4. Select a subset of MCQs.
-5. Generate additonal  answers for MCQs (using a different model than
+1. Set up your working directory
+2. Set up and activate your Conda environment
+3. Convert PDFs (papers) to JSON representations.
+4. Generate MCQs from JSON representations.
+5. Combine multiple MCQ JSON files into a single file
+6. Select a subset of MCQs.
+7. Generate additonal  answers for MCQs (using a different model than
 used to generate the initial MCQs and answers).
-6. Score AI-generated answers using another AI model.
-7. Review the status of MCQ generation and scoring.
+8. Score AI-generated answers using another AI model.
+9. Review the status of MCQ generation and scoring.
 
 
 ---
@@ -149,7 +151,7 @@ python select_mcqs_at_random.py -i MCQ-JSON-file -o Selected-MCQs.json -n 17
 
 ---
 
-### 6. Generate Answers for MCQs Using a Different Model
+### 7. Generate Answers for MCQs Using a Different Model
 This step uses an AI model to generate **new answers** for the selected MCQs. We will
 use a differnet model than above here. Note the form for specifying the model is 
 `<locn>:<model>` and in this example we will use `meta-llama/Meta-Llama-3-70B-Instruct`,
