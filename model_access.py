@@ -43,8 +43,8 @@ OPENAI_EP  = 'https://api.openai.com/v1'
 
 class Model:
     def __init__(self, model_name):
-        self.base_model = None
-        self.tokenizer  = None
+        self.base_model = config.defaultBaseModel
+        self.tokenizer  = config.defaultTokenizer
         self.model_name = model_name
         self.temperature = config.defaultTemperature
         self.headers = { 'Content-Type': 'application/json' }
