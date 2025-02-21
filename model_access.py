@@ -132,7 +132,7 @@ class Model:
     
         elif model_name.startswith('alcf'):
             self.model_name = model_name.split('alcf:')[1]
-            config.logger.info('\nALCF Inference Service Model: %s', self.model_name)
+            config.logger.info('ALCF Inference Service Model: %s', self.model_name)
 
             #from inference_auth_token import get_access_token
             #self.key = get_access_token()
