@@ -30,8 +30,9 @@ of your choice to generate **multiple-choice questions (MCQs)**, **answers**,
 and **scores** of those answers.
 
 **Preparation Steps:**
-i. Set up your working directory
-ii. Set up and activate your Conda environment
+
+ -  Set up your working directory
+ -  Set up and activate your Conda environment
 
 **Workflow Steps:**
 1. Convert PDFs (papers) to JSON representations.
