@@ -46,7 +46,7 @@ class Model:
         self.base_model = None
         self.tokenizer  = None
         self.model_name = model_name
-        self.temperature = 0.7
+        self.temperature = config.defaultTemperature
         self.headers = { 'Content-Type': 'application/json' }
         self.endpoint = None
 
