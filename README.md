@@ -49,7 +49,7 @@ and **scores** of those answers.
 
 ## Preparation Steps
 
-### i. Set Up Your Working Directory
+#### Set Up Your Working Directory
 Ensure your working directory has subdirectories for storing input and output files. The names
 of files and folders don't matter, but these are the names used in the steps below (so
 if you are just starting out, use these and you can copy/paste the steps).
@@ -70,9 +70,8 @@ already exist, but we will create them just to be sure..)
 
 At this stage you'll want to place some papers in PDF form into **myPDFdir**.
 
----
 
-### ii. Set Up and Activate Your Conda Environment
+#### Set Up and Activate Your Conda Environment
 If you already have a Conda environment you want to keep using, update it with 
 any missing dependencies needed for this workflow:
 ```bash
