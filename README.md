@@ -146,9 +146,9 @@ defaults to *openai:gpt-4o*.
 ### 6. Select a Subset of MCQs for Further Processing
 If you want to randomly select a subset of MCQs from the generated JSON files, use 
 `select_mcqs_at_random.py`, specifying the number of MCQs to select.  For example, to select
-17 MCQs::
+17 MCQs:
 ```bash
-python select_mcqs_at_random.py -i MCQ-JSON-file -o Selected-MCQs.json -n 17
+python select_mcqs_at_random.py -i MCQ-combined.json -o MCQ-subset.json -n 17
 ```
 
 ---
@@ -160,11 +160,11 @@ use a differnet model than above here. Note the form for specifying the model is
 whose endpoint is running at <locn> = `alcf`..
 
 ```bash
-python generate_answers.py -i Selected-MCQs.json \
+python generate_answers.py -i MCQ-subset.json \
        -o myRESULTSdir \
        -m 'alcf:meta-llama/Meta-Llama-3-70B-Instruct'
 ```
-- **Input:** `Selected-MCQs.json` (or `MCQ-JSON-file` if no subset was chosen).
+- **Input:** `MCQ-subset.json` (or `MCQ-combined.json` if no subset was chosen).
 - **Output:** `myRESULTSdir/answers_<model>.json` (AI-generated answers).
 
 ---
