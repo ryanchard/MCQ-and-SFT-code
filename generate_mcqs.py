@@ -136,7 +136,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
             config.logger.warning(f"Error summarizing and expanding chunk: {e}")
             # Check for fatal errors
             if "401" in str(e) or "Unauthorized" in str(e):
-                sys.exit("Model API Authentication failed. Exiting.")
+                sys.exit("Model API Authentication failed. ({str(e}) Exiting.")
             pbar.update(1)
             continue
 
