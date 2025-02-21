@@ -192,7 +192,7 @@ python score_answers.py -o myRESULTSdir \
 ### 9. Review MCQ Generation and Scoring Status
 To check progress and see which MCQs are answered/scored:
 ```bash
-python review_status.py -i MCQ-JSON-file -o myRESULTSdir
+python review_status.py -i MCQ-combined.json -o myRESULTSdir
 ```
 - This script identifies missing or incomplete processing steps.
 
