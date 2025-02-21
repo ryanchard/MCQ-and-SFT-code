@@ -119,20 +119,11 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
 
     for chunknum, chunk in enumerate(chunks, start=1):
         # Step 1: Summarize & expand the chunk
-        system_message = (
-            "You are a helpful assistant that summarizes text in bullet points "
-            "and expands on them using your broader knowledge. "
-            "Name this result 'augmented_chunk'."
-        )
-        user_message = (
-            f"Given the following chunk of text, please:\n\n"
-            f"1. Summarize the text in bullet points.\n"
-            f"2. Expand on the summary using your parametric knowledge.\n\n"
-            f"Chunk:\n{chunk}\n\n"
-            f"Return the result as plain text labeled 'augmented_chunk:' at the start."
-        )
         try:
-            step1_output = model.run(user_prompt=user_message, system_prompt=system_message)
+            formatted_user_message = config.user_message.format(chunk=chunk)
+
+            step1_output = model.run(user_prompt=formatted_user_message,
+                                     system_prompt= config.system_message)
             augmented_chunk = step1_output
             if "augmented_chunk:" in str(step1_output).lower():
                 augmented_chunk = re.split(
@@ -150,25 +141,11 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
             continue
 
         # Step 2: Generate a MULTIPLE-CHOICE question with 5 answers
-        system_message_2 = (
-            "You are a helpful assistant that generates exactly ONE multiple-choice question "
-            "based on the provided text (augmented_chunk). The question must have 5 possible answers, "
-            "numbered 1 to 5. Exactly one of these 5 choices is correct. "
-            "Mark the correct choice with '(*)' at the end for later grading."
-        )
-        user_message_2 = (
-            f"Below is some content called augmented_chunk.\n"
-            f"Please:\n"
-            f"1) Create exactly one multiple-choice question that can be answered by the augmented_chunk.\n"
-            f"2) Provide five distinct options (1 to 5) as answers.\n"
-            f"3) Mark the correct answer with '(*)' at the end of that particular option.\n\n"
-            f"Constraints:\n"
-            f"- The question and answers must be self-contained and understandable without referencing the chunk.\n"
-            f"- Do not mention 'chunk' or 'augmented_chunk' or 'article' or 'study' in the final output.\n\n"
-            f"augmented_chunk:\n{augmented_chunk}\n"
-        )
         try:
-            generated_question = model.run(user_prompt=user_message_2, system_prompt=system_message_2)
+            formatted_user_message_2 = config.user_message_2.format(augmented_chunk=augmented_chunk)
+            generated_question = model.run( user_prompt=formatted_user_message_2,
+                                           system_prompt=config.system_message_2
+            )
         except Exception as e:
             config.logger.warning(f"Error generating question: {e}")
             # Check for fatal errors
@@ -178,37 +155,28 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
             continue
 
         # Step 3: Verify the question by prompting GPT with the augmented_chunk
-        system_message_3 = (
-            "You are a helpful assistant that evaluates how well an answer "
-            "matches the question in context of the augmented_chunk. "
-            "Return your answer and a score from 1 to 10 in JSON form like:\n"
-            '{"answer":"...","score":9}'
-        )
-        user_message_3 = (
-            f"augmented_chunk:\n{augmented_chunk}\n\n"
-            f"question:\n{generated_question}\n\n"
-            f"Please provide:\n"
-            f"1. An appropriate answer to the multiple-choice question above. "
-            f"Your answer should identify which option is correct and why. "
-            f"2. A single integer 'score' from 1 to 10 for how well the answer "
-            f"addresses the question based on the augmented_chunk.\n\n"
-            f"Output must be valid JSON in the form:\n"
-            f'{{"answer":"...","score":9}}'
-        )
         try:
-            step3_output = model.run(user_prompt=user_message_3, system_prompt=system_message_3)
+            # Format the user prompt with both augmented_chunk and generated_question.
+            formatted_user_message_3 = config.user_message_3.format(
+                augmented_chunk=augmented_chunk,
+                generated_question=generated_question
+            )
+
+            step3_output = model.run(
+                user_prompt=formatted_user_message_3,
+                system_prompt=config.system_message_3
+            )
+
             step3_output = step3_output.replace("```json", "").replace("```", "")
             step3_output = step3_output.replace('\\"', "XXXABCXXX")
             step3_output = step3_output.replace("\\", "\\\\")
             step3_output = step3_output.replace("XXXABCXXX", '\\"')
 
             parsed_json = json.loads(step3_output)
-            #model_answer = parsed_json.get("answer", "").strip()
-            # replace line above with this one to force a string and save an exception when answer is an int
             model_answer = str(parsed_json.get("answer", "")).strip()
             model_score = parsed_json.get("score", 0)
 
-            # Instead of printing inline, update the progress bar postfix
+            # Update the progress bar with the current score.
             pbar.set_postfix_str(f"Score: {model_score}")
 
             if isinstance(model_score, int) and model_score > 7:
@@ -233,8 +201,13 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
             TEXT TO FIX:
             {step3_output}
             """
+            #debugging
+            config.logger.info("JSON to fix: {step3_output}")
             try:
-                fixed_json_output = model.run(system_prompt="You are a strict JSON converter.", user_prompt=fix_prompt)
+                fixed_json_output = model.run(
+                    system_prompt="You are a strict JSON converter.",
+                    user_prompt=fix_prompt
+                )
                 parsed_json = json.loads(fixed_json_output)
                 model_answer = parsed_json.get("answer", "").strip()
                 model_score = parsed_json.get("score", 0)
