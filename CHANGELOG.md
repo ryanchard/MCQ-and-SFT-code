@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.3 - 21Feb (CeC)
+- replaced print statements with logging
+- implemented tqdm progress bar (including a null stub to suppress when in default
+  INFO logging level which logs what used to be printed by default to monitor progress
+- new -q --quiet option to only display progress bar, no INFO meessage (but still will
+  log (print) warnings)
+- fixed a few string ops by forcing str(var) (just a bit cleaner output, since
+  non-string items throw exceptions at string operations like .lower or .strip)
+
 ## v0.2 - 11Feb (CeC)
 - added jq to environment for easy reading json
 - added step to check what models are running prior to firing off generate\_mcqs
