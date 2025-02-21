@@ -132,14 +132,14 @@ defaults to *openai:gpt-4o*.
         -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
    ```
 
-### 4. Combine multiple MCQ JSON files into a single file
+### 5. Combine multiple MCQ JSON files into a single file
    ```bash
    python combine_json_files.py -i myJSON-MCQdir -o MCQ-JSON-file
    ```
 
 ---
 
-### 5. Select a Subset of MCQs for Further Processing
+### 6. Select a Subset of MCQs for Further Processing
 If you want to randomly select a subset of MCQs from the generated JSON files, use 
 `select_mcqs_at_random.py`, specifying the number of MCQs to select.  For example, to select
 17 MCQs::
@@ -165,7 +165,7 @@ python generate_answers.py -i Selected-MCQs.json \
 
 ---
 
-### 7. Score AI-Generated Answers
+### 8. Score AI-Generated Answers
 An AI model evaluates and scores the generated answers against reference answers. Here we
 will use
 `alcf:mistralai/Mistral-7B-Instruct-v0.3`
@@ -183,7 +183,7 @@ python score_answers.py -o myRESULTSdir \
 
 ---
 
-### 8. Review MCQ Generation and Scoring Status
+### 9. Review MCQ Generation and Scoring Status
 To check progress and see which MCQs are answered/scored:
 ```bash
 python review_status.py -i MCQ-JSON-file -o myRESULTSdir
