@@ -4,11 +4,22 @@
 # Model Defaults
 # Prompts (system and user messges)
 
+# Model #
+# temperature, base model, tokenizer applied to whatever model is specified
+# on the command line. Model name below is used if no model is specified on 
+# the comment line.
+#
 
 model:
-  name: "alcf:mistralai/Mistral-7B-Instruct-v0.3"
-  temperature: 0.7
+  name:        "alcf:mistralai/Mistral-7B-Instruct-v0.3"
+  temperature:  0.7
+  baseModel:   "None"
+  Tokenizer:   "None"
 
+
+# Prompts #
+# Iteration with model to generate MCQ Q/A pairs
+#
   
 prompts:
   system_message: |

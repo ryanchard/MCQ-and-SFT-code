@@ -30,22 +30,25 @@ def load_config(file_path="config.yml"):
 _config = load_config()
 
 # Group variables logically.
-prompts = _config.get("prompts", {})
+prompts =      _config.get("prompts", {})
 model_config = _config.get("model", {})
 
 # Prompt settings.
-system_message = prompts.get("system_message", "")
-user_message = prompts.get("user_message", "")
-system_message_2 = prompts.get("system_message_2", "")
-user_message_2 = prompts.get("user_message_2", "")
-system_message_3 = prompts.get("system_message_3", "")
-user_message_3 = prompts.get("user_message_3", "")
+system_message     = prompts.get("system_message", "")
+user_message       = prompts.get("user_message", "")
+system_message_2   = prompts.get("system_message_2", "")
+user_message_2     = prompts.get("user_message_2", "")
+system_message_3   = prompts.get("system_message_3", "")
+user_message_3     = prompts.get("user_message_3", "")
 
-# Model settings / defaults (if not set in config.yml)
+# Model config
 defaultModel = model_config.get("name", "alcf:mistralai/Mistral-7B-Instruct-v0.3")
 defaultTemperature = model_config.get("temperature", 0.7)
+defaultBaseModel =   model_config.get("temperature", 0.7)
+defaultTokenizer =   model_config.get("tokenizer", 0.7)
 
-# Quiet mode flag.
+# Quiet mode  (-q or --quiet)
+# (replaces INFO log msgs with a progress bar)
 quietMode = False
 
 def set_quiet_mode(enable: bool):
