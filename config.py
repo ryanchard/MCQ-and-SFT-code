@@ -1,62 +1,61 @@
-#!/usr/bin/env python3
-import logging
 import os
 import yaml
+import logging
 
-# Define quiet mode flag (default is False)
-quietMode = False
+# Set up a unique logger.
+logger = logging.getLogger("MCQGenerator")
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    ch = logging.StreamHandler()
+    formatter = logging.Formatter("%(levelname)s: %(message)s")
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
 
-# Define default model (if not specified on command line with -m)
-defaultModel = 'openai:gpt-4o'
-
-# Configure logging
-logger = logging.getLogger("MCQGenerator")  # Unique logger name
-logger.setLevel(logging.INFO)  # Default logging level
-
-# Create a console handler
-console_handler = logging.StreamHandler()
-console_formatter = logging.Formatter("%(levelname)s: %(message)s")
-console_handler.setFormatter(console_formatter)
-
-# Add handler to logger
-logger.addHandler(console_handler)
-
-# Function to enable quiet mode
-def set_quiet_mode(enable: bool):
-    global quietMode
-    quietMode = enable
-    if quietMode:
-        logger.setLevel(logging.WARNING)  # Suppress INFO messages
-    else:
-        logger.setLevel(logging.INFO)  # Show INFO messages
-
-def get_quiet_mode() -> bool:
-    return quietMode
-
-# Load the prompts from prompt.yml
-def load_prompts(file_path='prompts.yml'):
+def load_config(file_path="config.yml"):
     """
-    Safely load prompt definitions from a YAML file.
+    Safely load configuration settings from a YAML file.
     """
     if not os.path.exists(file_path):
-        logger.error(f"Prompts file '{file_path}' not found.")
-        raise FileNotFoundError(f"Prompts file '{file_path}' not found.")
+        logger.error(f"Config file '{file_path}' not found.")
+        raise FileNotFoundError(f"Config file '{file_path}' not found.")
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
         return data
     except yaml.YAMLError as exc:
         logger.error(f"Error parsing YAML file '{file_path}': {exc}")
         raise
 
-# Load prompt messages from prompts.yml
-_prompts = load_prompts()
+# Load the configuration.
+_config = load_config()
 
-# Expose prompt variables from the YAML file
-system_message      = _prompts.get('system_message', "")
-user_message        = _prompts.get('user_message', "")
-system_message_2    = _prompts.get('system_message_2', "")
-user_message_2      = _prompts.get('user_message_2', "")
-system_message_3    = _prompts.get('system_message_3', "")
-user_message_3      = _prompts.get('user_message_3', "")
+# Group variables logically.
+prompts = _config.get("prompts", {})
+model_config = _config.get("model", {})
+
+# Prompt settings.
+system_message = prompts.get("system_message", "")
+user_message = prompts.get("user_message", "")
+system_message_2 = prompts.get("system_message_2", "")
+user_message_2 = prompts.get("user_message_2", "")
+system_message_3 = prompts.get("system_message_3", "")
+user_message_3 = prompts.get("user_message_3", "")
+
+# Model settings / defaults (if not set in config.yml)
+defaultModel = model_config.get("name", "alcf:mistralai/Mistral-7B-Instruct-v0.3")
+defaultTemperature = model_config.get("temperature", 0.7)
+
+# Quiet mode flag.
+quietMode = False
+
+def set_quiet_mode(enable: bool):
+    global quietMode
+    quietMode = enable
+    if quietMode:
+        logger.setLevel(logging.WARNING)
+    else:
+        logger.setLevel(logging.INFO)
+
+def get_quiet_mode() -> bool:
+    return quietMode
 
