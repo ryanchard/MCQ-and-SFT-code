@@ -35,6 +35,9 @@ and **scores** of those answers.
  -  Set up and activate your Conda environment
 
 **Workflow Steps:**
+
+[**(flowchart)**](https://github.com/auroraGPT-ANL/MCQ-and-SFT-code/blob/CeC/MCQ-Workflow.png)
+
 1. Convert PDFs (papers) to JSON representations.
 2. Generate MCQs from JSON representations.
 3. Combine multiple MCQ JSON files into a single file
@@ -44,7 +47,6 @@ and **scores** of those answers.
 6. Score AI-generated answers using another AI model.
 7. Review the status of MCQ generation and scoring.
 
-[**(flowchart for this workflow)**](https://github.com/auroraGPT-ANL/MCQ-and-SFT-code/blob/CeC/MCQ-Workflow.png)
 
 
 
