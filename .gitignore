@@ -1,6 +1,6 @@
 *.swp
 *_access_token.txt
-inference_auth_token.py
 wandb
 __pycache__
 output.log
+.DS_Store
