@@ -324,7 +324,9 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
                 lines = file.readlines()
 
             for j, line in enumerate(lines, start=1):
-                config.logger.info(f"Processing line {j} of {len(lines)} in file {i}")
+                # JSON file will get read as one line most of the time so this msg is
+                # misleading and not helpful
+                #config.logger.info(f"Processing line {j} of {len(lines)} in file {i}")
                 try:
                     record = json.loads(line.strip())
                 except json.JSONDecodeError as e:
