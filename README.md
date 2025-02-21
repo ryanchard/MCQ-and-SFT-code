@@ -29,22 +29,26 @@ This pipeline converts scientific papers in **PDF format** into JSON and then us
 of your choice to generate **multiple-choice questions (MCQs)**, **answers**,
 and **scores** of those answers.
 
+**Preparation Steps:**
+i. Set up your working directory
+ii. Set up and activate your Conda environment
+
 **Workflow Steps:**
-1. Set up your working directory
-2. Set up and activate your Conda environment
-3. Convert PDFs (papers) to JSON representations.
-4. Generate MCQs from JSON representations.
-5. Combine multiple MCQ JSON files into a single file
-6. Select a subset of MCQs.
-7. Generate additonal  answers for MCQs (using a different model than
-used to generate the initial MCQs and answers).
-8. Score AI-generated answers using another AI model.
-9. Review the status of MCQ generation and scoring.
+1. Convert PDFs (papers) to JSON representations.
+2. Generate MCQs from JSON representations.
+3. Combine multiple MCQ JSON files into a single file
+4. Select a subset of MCQs.
+5. Generate additonal  answers for MCQs (using a different model than
+   used to generate the initial MCQs and answers).
+6. Score AI-generated answers using another AI model.
+7. Review the status of MCQ generation and scoring.
 
 
 ---
 
-### 1. Set Up Your Working Directory
+## Preparation Steps
+
+### i. Set Up Your Working Directory
 Ensure your working directory has subdirectories for storing input and output files. The names
 of files and folders don't matter, but these are the names used in the steps below (so
 if you are just starting out, use these and you can copy/paste the steps).
@@ -67,7 +71,7 @@ At this stage you'll want to place some papers in PDF form into **myPDFdir**.
 
 ---
 
-### 2. Set Up and Activate Your Conda Environment
+### ii. Set Up and Activate Your Conda Environment
 If you already have a Conda environment you want to keep using, update it with 
 any missing dependencies needed for this workflow:
 ```bash
@@ -83,7 +87,9 @@ then create and activate that env.)
 
 ---
 
-### 3. Convert PDFs to JSON
+## Workflow
+
+### 1. Convert PDFs to JSON
 Extract text from PDFs using a simple parser:
 ```bash
 python simple_parse.py -i myPDFdir -o myJSONdir
@@ -93,7 +99,7 @@ Alternatively, you can use **AdaParse** (higher-quality parser, still in testing
 
 ---
 
-### 4. Generate MCQs Using an AI Model
+### 2. Generate MCQs Using an AI Model
 To generate MCQs from parsed JSON files:
 
 1. **Authenticate with ALCF inference service (if not already done):**
@@ -138,14 +144,14 @@ defaults to *openai:gpt-4o*.
 
 ---
 
-### 5. Combine multiple MCQ JSON files into a single file
+### 3. Combine multiple MCQ JSON files into a single file
    ```bash
    python combine_json_files.py -i myJSON-MCQdir -o MCQ-combined.json
    ```
 
 ---
 
-### 6. Select a Subset of MCQs for Further Processing
+### 4. Select a Subset of MCQs for Further Processing
 If you want to randomly select a subset of MCQs from the generated JSON files, use 
 `select_mcqs_at_random.py`, specifying the number of MCQs to select.  For example, to select
 17 MCQs:
@@ -155,7 +161,7 @@ python select_mcqs_at_random.py -i MCQ-combined.json -o MCQ-subset.json -n 17
 
 ---
 
-### 7. Generate Answers for MCQs Using a Different Model
+### 5. Generate Answers for MCQs Using a Different Model
 This step uses an AI model to generate **new answers** for the selected MCQs. We will
 use a differnet model than above here. Note the form for specifying the model is 
 `<locn>:<model>` and in this example we will use `meta-llama/Meta-Llama-3-70B-Instruct`,
@@ -171,7 +177,7 @@ python generate_answers.py -i MCQ-subset.json \
 
 ---
 
-### 8. Score AI-Generated Answers
+### 6. Score AI-Generated Answers
 An AI model evaluates and scores the generated answers against reference answers. Here we
 will use
 `alcf:mistralai/Mistral-7B-Instruct-v0.3`
@@ -189,7 +195,7 @@ python score_answers.py -o myRESULTSdir \
 
 ---
 
-### 9. Review MCQ Generation and Scoring Status
+### 7. Review MCQ Generation and Scoring Status
 To check progress and see which MCQs are answered/scored:
 ```bash
 python review_status.py -i MCQ-combined.json -o myRESULTSdir
