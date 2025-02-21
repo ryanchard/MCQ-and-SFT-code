@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import logging
+import os
+import yaml
 
 # Define quiet mode flag (default is False)
 quietMode = False
@@ -30,4 +32,31 @@ def set_quiet_mode(enable: bool):
 
 def get_quiet_mode() -> bool:
     return quietMode
+
+# Load the prompts from prompt.yml
+def load_prompts(file_path='prompts.yml'):
+    """
+    Safely load prompt definitions from a YAML file.
+    """
+    if not os.path.exists(file_path):
+        logger.error(f"Prompts file '{file_path}' not found.")
+        raise FileNotFoundError(f"Prompts file '{file_path}' not found.")
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+        return data
+    except yaml.YAMLError as exc:
+        logger.error(f"Error parsing YAML file '{file_path}': {exc}")
+        raise
+
+# Load prompt messages from prompts.yml
+_prompts = load_prompts()
+
+# Expose prompt variables from the YAML file
+system_message      = _prompts.get('system_message', "")
+user_message        = _prompts.get('user_message', "")
+system_message_2    = _prompts.get('system_message_2', "")
+user_message_2      = _prompts.get('user_message_2', "")
+system_message_3    = _prompts.get('system_message_3', "")
+user_message_3      = _prompts.get('user_message_3', "")
 
