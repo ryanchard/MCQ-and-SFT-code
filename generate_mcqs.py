@@ -35,6 +35,8 @@ class NoOpTqdm:
         pass
     def close(self):
         pass
+    def total(self):
+        pass
 
 ######
 # Functions
@@ -128,7 +130,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
         try:
             step1_output = model.run(user_prompt=user_message, system_prompt=system_message)
             augmented_chunk = step1_output
-            if "augmented_chunk:" in step1_output.lower():
+            if "augmented_chunk:" in str(step1_output).lower():
                 augmented_chunk = re.split(
                     r'augmented_chunk\s*:\s*',
                     step1_output,
@@ -312,7 +314,7 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
         file_path = os.path.join(input_dir, filename)
         file_start_time = time.time()
 
-        config.logger.info(f"\nProcessing file {i}/{total_files}: {file_path}")
+        config.logger.info(f"Processing file {i}/{total_files}: {file_path}")
 
         with open(file_path, 'r', encoding='utf-8') as file:
             if filename.lower().endswith(".json"):
