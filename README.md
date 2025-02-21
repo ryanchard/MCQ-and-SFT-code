@@ -136,9 +136,11 @@ defaults to *openai:gpt-4o*.
         -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
    ```
 
+---
+
 ### 5. Combine multiple MCQ JSON files into a single file
    ```bash
-   python combine_json_files.py -i myJSON-MCQdir -o MCQ-JSON-file
+   python combine_json_files.py -i myJSON-MCQdir -o MCQ-combined.json
    ```
 
 ---
