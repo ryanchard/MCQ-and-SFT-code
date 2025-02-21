@@ -94,7 +94,6 @@ To generate MCQs from parsed JSON files:
 
 1. **Authenticate with ALCF inference service (if not already done):**
    ```bash
-   wget https://raw.githubusercontent.com/argonne-lcf/inference-endpoints/refs/heads/main/inference_auth_token.py
    python inference_auth_token.py authenticate
    ```
 2. **(Optional) Check which models are running**
