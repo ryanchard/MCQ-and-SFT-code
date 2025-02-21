@@ -45,7 +45,9 @@ used to generate the initial MCQs and answers).
 ---
 
 ### 1. Set Up Your Working Directory
-Ensure your working directory has subdirectories for storing input and output files.
+Ensure your working directory has subdirectories for storing input and output files. The names
+of files and folders don't matter, but these are the names used in the steps below (so
+if you are just starting out, use these and you can copy/paste the steps).
 
 - `myPDFdir/` → Stores **original PDF papers**.
 - `myJSONdir/` → Stores **parsed text in JSON format**.
