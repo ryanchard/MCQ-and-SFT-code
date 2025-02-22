@@ -22,6 +22,8 @@ model:
 #
   
 prompts:
+
+  # Step 1
   system_message: |
     You are a helpful assistant that summarizes text in bullet points and expands on them using your broader knowledge. Name this result 'augmented_chunk'.
   user_message: |
@@ -34,6 +36,8 @@ prompts:
     {chunk}
 
     Return the result as plain text labeled 'augmented_chunk:' at the start.
+    
+  # Step 2
   system_message_2: |
     You are a helpful assistant that generates exactly ONE multiple-choice question based on the provided text (augmented_chunk). The question must have 5 possible answers, numbered 1 to 5. Exactly one of these 5 choices is correct. Mark the correct choice with '(*)' at the end for later grading.
   user_message_2: |
@@ -49,9 +53,10 @@ prompts:
 
     augmented_chunk:
     {augmented_chunk}
+
+  # Step 3
   system_message_3: |
-    You are a helpful assistant that evaluates how well an answer matches the question in context of the augmented_chunk. Return your answer and a score from 1 to 10. Output MUST BE VALID JSON in the form:
-    {{"answer":"...","score":9}}
+    You are a helpful assistant that evaluates how well an answer matches the question in context of the augmented_chunk. Return your evaluation strictly as valid JSON with no additional text, with precisely three key-value pairs: ANSWER, SCORE, and COMMENT. No additional formatting or text shoud be included, just these three key-value pairs in valid JSON format.
   user_message_3: |
     augmented_chunk:
     {augmented_chunk}
@@ -59,10 +64,10 @@ prompts:
     question:
     {generated_question}
 
-    Please provide:
-    1. An appropriate answer to the multiple-choice question above. Your answer should identify which option is correct and why.
+    Please provide, in JSON format:
+    1. An appropriate answer to the multiple-choice question above.
     2. A single integer 'score' from 1 to 10 for how well the answer addresses the question based on the augmented_chunk.
+    3. A brief comment explaining why this answer is correct.
 
-    Output must be valid JSON in the form:
-    {{"answer":"...","score":9}}
+    Output must be valid JSON with the three key-value pairs of ANSWER, SCORE, and COMMENT.
 
