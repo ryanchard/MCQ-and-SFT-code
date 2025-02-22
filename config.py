@@ -32,6 +32,7 @@ _config = load_config()
 # Group variables logically.
 prompts =      _config.get("prompts", {})
 model_config = _config.get("model", {})
+quality =      _config.get("quality", {})
 
 # Prompt settings.
 system_message     = prompts.get("system_message", "")
@@ -46,6 +47,9 @@ defaultModel = model_config.get("name", "alcf:mistralai/Mistral-7B-Instruct-v0.3
 defaultTemperature = model_config.get("temperature", 0.7)
 defaultBaseModel =   model_config.get("baseModel", "None")
 defaultTokenizer =   model_config.get("Tokenizer", "None")
+
+# Quality (MCQ) settings
+minScore           = quality.get("minScore", 7)
 
 # Quiet mode  (-q or --quiet)
 # (replaces INFO log msgs with a progress bar)

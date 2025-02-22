@@ -17,6 +17,11 @@ model:
   Tokenizer:   "None"
 
 
+# Other MCQ-related parameters
+
+quality:
+  minScore:    7
+
 # Prompts #
 # Iteration with model to generate MCQ Q/A pairs
 #
