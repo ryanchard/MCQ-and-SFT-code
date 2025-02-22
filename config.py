@@ -44,8 +44,8 @@ user_message_3     = prompts.get("user_message_3", "")
 # Model config
 defaultModel = model_config.get("name", "alcf:mistralai/Mistral-7B-Instruct-v0.3")
 defaultTemperature = model_config.get("temperature", 0.7)
-defaultBaseModel =   model_config.get("temperature", 0.7)
-defaultTokenizer =   model_config.get("tokenizer", 0.7)
+defaultBaseModel =   model_config.get("baseModel", "None")
+defaultTokenizer =   model_config.get("Tokenizer", "None")
 
 # Quiet mode  (-q or --quiet)
 # (replaces INFO log msgs with a progress bar)
