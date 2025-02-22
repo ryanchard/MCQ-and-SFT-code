@@ -24,6 +24,8 @@ alcf_chat_models = get_names_of_alcf_chat_models(alcf_access_token)
 # Global constants
 ##############################################################################
 CHUNK_SIZE = 1000  # approximate number of words per chunk
+chunks_successful = 0
+chunks_failed     = 0
 
 
 # add a "no op" progress bar for quiet mode
@@ -115,6 +117,9 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
 
     Returns a list of dicts with the QA pair if they pass the score threshold.
     """
+
+    global chunks_successful
+    global chunks_failed
     qa_pairs = []
 
     for chunknum, chunk in enumerate(chunks, start=1):
@@ -138,6 +143,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
             if "401" in str(e) or "Unauthorized" in str(e):
                 sys.exit("Model API Authentication failed. ({str(e}) Exiting.")
             pbar.update(1)
+            chunks_failed +=1
             continue
 
         # Step 2: Generate a MULTIPLE-CHOICE question with 5 answers
@@ -152,6 +158,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
             if "401" in str(e) or "Unauthorized" in str(e):
                 sys.exit("Model API Authentication failed. Exiting.")
             pbar.update(1)
+            chunks_failed +=1
             continue
 
         # Step 3: Verify the question by prompting GPT with the augmented_chunk
@@ -166,6 +173,9 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
                 user_prompt=formatted_user_message_3,
                 system_prompt=config.system_message_3
             )
+            if step3_output is None:
+                raise ValueError("model.run() returned None for step3_output.")
+
 
             step3_output = step3_output.replace("```json", "").replace("```", "")
             step3_output = step3_output.replace('\\"', "XXXABCXXX")
@@ -173,13 +183,22 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
             step3_output = step3_output.replace("XXXABCXXX", '\\"')
 
             parsed_json = json.loads(step3_output)
+            
+            if isinstance(parsed_json, str):
+                parsed_json = json.loads(parsed_json)
+            if not isinstance(parsed_json, dict):
+                raise ValueError(f"Expected a JSON object but got: {parsed_json}")
+
             model_answer = str(parsed_json.get("answer", "")).strip()
             model_score = parsed_json.get("score", 0)
 
             # Update the progress bar with the current score.
             pbar.set_postfix_str(f"Score: {model_score}")
 
-            if isinstance(model_score, int) and model_score > 7:
+            if isinstance(model_score, int) and model_score > config.minScore:
+                #debugging
+                config.logger.info(f"minScore set to {config.minScore}.")
+
                 qa_pairs.append({
                     "file": filename,
                     "path": path,
@@ -190,6 +209,11 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
                     "answer": model_answer,
                     "text": augmented_chunk
                 })
+
+            # debugging
+            #config.logger.info("Chunk successful")
+
+            chunks_successful +=1
 
         except json.JSONDecodeError:
             config.logger.warning("JSON parsing failed. Trying to fix output...")
@@ -208,7 +232,19 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
                     system_prompt="You are a strict JSON converter.",
                     user_prompt=fix_prompt
                 )
-                parsed_json = json.loads(fixed_json_output)
+                try:
+                    parsed_json = json.loads(step3_output)
+                    if isinstance(parsed_json, str):
+                        parsed_json = json.loads(parsed_json)
+                    if not isinstance(parsed_json, dict):
+                        raise ValueError(f"Expected a JSON object but got: {parsed_json}")
+                except json.JSONDecodeError as e:
+                    if "Expecting value: line 1 column 1" in str(e):
+                        config.logger.warning("Output is not valid JSON (empty or invalid): " + step3_output)
+                    else:
+                        config.logger.warning(f"JSON decoding error: {e}")
+                    continue
+
                 model_answer = parsed_json.get("answer", "").strip()
                 model_score = parsed_json.get("score", 0)
                 pbar.set_postfix_str(f"Score: {model_score}")
@@ -222,11 +258,13 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
             except Exception as e:
                 config.logger.warning(f"Could not fix JSON automatically: {e}")
                 pbar.update(1)
+                chunks_failed +=1
                 continue
 
         except Exception as e:
             config.logger.warning(f"Error in verifying question/answer: {e}")
             pbar.update(1)
+            chunks_failed +=1
             continue
 
         # Update the progress bar after processing this chunk
@@ -255,8 +293,8 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
         return
 
     overall_start_time = time.time()
-    cumulative_time = 0.0
-    processed_count = 0
+    cumulative_time   = 0.0
+    processed_count   = 0
 
     if len(jsonl_files) > 0:
         line_counts = []
@@ -332,15 +370,16 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
         estimated_time_remaining = remaining_files * avg_time_per_file_so_far
 
         config.logger.info(
-            f"Time for this file: {human_readable_time(file_time_taken)} | "
-            f"Processed: {processed_count}/{total_files} | "
+            f"Time for this file: {human_readable_time(file_time_taken)}. | "
+            f"Processed: {processed_count}/{total_files}. | "
             f"Estimated remaining: {human_readable_time(estimated_time_remaining)}"
         )
 
     total_time = time.time() - overall_start_time
     config.logger.info(
-        f"\nDone! Processed {processed_count}/{total_files} files in "
-        f"{human_readable_time(total_time)}.\n"
+        f"Processed file in "
+        f"{human_readable_time(total_time)}.\n      "
+        f"{chunks_successful} chunks succeeded, {chunks_failed} failed.  | "
         f"Prompt/answer pairs (score > 7) saved to {output_dir}."
     )
 
@@ -351,8 +390,9 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
     # Final logging (after processing all files)
     total_time = time.time() - overall_start_time
     config.logger.info(
-        f"\nDone! Processed {processed_count}/{total_files} files in "
-        f"{human_readable_time(total_time)}.\n"
+        f"Done. Processed {processed_count}/{total_files} files in "
+        f"{human_readable_time(total_time)}.\n      "
+        f"{chunks_successful} chunks succeeded, {chunks_failed} failed.\n       "
         f"Prompt/answer pairs (score > 7) saved to {output_dir}."
     )
     if processed_count > 0:
