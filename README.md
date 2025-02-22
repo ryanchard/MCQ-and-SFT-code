@@ -156,7 +156,7 @@ defaults to *openai:gpt-4o*.
 
 ---
 
-### 4. Select a Subset of MCQs for Further Processing
+### 4. Select a Random Subset of MCQs for Further Processing (optional)
 If you want to randomly select a subset of MCQs from the generated JSON files, use 
 `select_mcqs_at_random.py`, specifying the number of MCQs to select.  For example, to select
 17 MCQs:
