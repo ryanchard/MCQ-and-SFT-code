@@ -59,21 +59,21 @@ Ensure your working directory has subdirectories for storing input and output fi
 of files and folders don't matter, but these are the names used in the steps below (so
 if you are just starting out, use these and you can copy/paste the steps).
 
-- `myPDFdir/` → Stores **original PDF papers**.
-- `myJSONdir/` → Stores **parsed text in JSON format**.
-- `myJSON-MCQdir/` → Stores **generated MCQs in JSON format**.
-- `myRESULTSdir/` → Stores **AI-generated answers and scores**.
+- `_PAPERS/` → Stores **original PDF papers**.
+- `_JSON/` → Stores **parsed text in JSON format**.
+- `_MCQ/` → Stores **generated MCQs in JSON format**.
+- `_RESULTS/` → Stores **AI-generated answers and scores**.
 
 If you're just starting (and don't already have these or equivalent directories),
 , create these directories manually. If yours are named differently, substitute your
 directory names as you follow the instruction sequence below::
 ```bash
-mkdir myPDFdir myJSONdir myJSON-MCQdir myRESULTSdir
+mkdir _PAPERS _JSON _MCQ _RESULTS
 ```
 (**Note:** Some of the scripts below create their output directories automatically if they don’t
 already exist, but we will create them just to be sure..)
 
-At this stage you'll want to place some papers in PDF form into **myPDFdir**.
+At this stage you'll want to place some papers in PDF form into **_PAPERS**.
 
 
 #### Set Up and Activate Your Conda Environment
@@ -97,7 +97,7 @@ then create and activate that env.)
 ### 1. Convert PDFs to JSON
 Extract text from PDFs using a simple parser:
 ```bash
-python simple_parse.py -i myPDFdir -o myJSONdir
+python simple_parse.py -i _PAPERS -o _JSON
 ```
 Alternatively, you can use **AdaParse** (higher-quality parser, still in testing). 
 [More details](https://github.com/7shoe/AdaParse/tree/main)
@@ -142,8 +142,8 @@ defaults to *openai:gpt-4o*.
 
 
    ```bash
-   python generate_mcqs.py -i myJSONdir \
-        -o myJSON-MCQdir \
+   python generate_mcqs.py -i _JSON \
+        -o _MCQ \
         -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
    ```
 
@@ -151,7 +151,7 @@ defaults to *openai:gpt-4o*.
 
 ### 3. Combine multiple MCQ JSON files into a single file
    ```bash
-   python combine_json_files.py -i myJSON-MCQdir -o MCQ-combined.json
+   python combine_json_files.py -i _MCQ -o MCQ-combined.json
    ```
 
 ---
@@ -174,11 +174,11 @@ whose endpoint is running at <locn> = `alcf`..
 
 ```bash
 python generate_answers.py -i MCQ-subset.json \
-       -o myRESULTSdir \
+       -o _RESULTS \
        -m 'alcf:meta-llama/Meta-Llama-3-70B-Instruct'
 ```
 - **Input:** `MCQ-subset.json` (or `MCQ-combined.json` if no subset was chosen).
-- **Output:** `myRESULTSdir/answers_<model>.json` (AI-generated answers).
+- **Output:** `RESULTS/answers_<model>.json` (AI-generated answers).
 
 ---
 
@@ -190,12 +190,12 @@ to evaluate the answers we created in the previous step with
 `alcf:meta-llama/Meta-Llama-3-70B-Instruct`
 
 ```bash
-python score_answers.py -o myRESULTSdir \
+python score_answers.py -o _RESULTS \
        -a 'alcf:meta-llama/Meta-Llama-3-70B-Instruct' \
        -b 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
 ```
-- **Input:** `myRESULTSdir/answers_<model-A>.json`
-- **Output:** `myRESULTSdir/scores_<locn-A>:<model-A>_<locn-B>:<model-B>.json`
+- **Input:** `_RESULTS/answers_<model-A>.json`
+- **Output:** `_RESULTS/scores_<locn-A>:<model-A>_<locn-B>:<model-B>.json`
 - **Note:** Any `/` in model names is replaced with `+` in filenames.
 
 ---
@@ -203,7 +203,7 @@ python score_answers.py -o myRESULTSdir \
 ### 7. Review MCQ Generation and Scoring Status
 To check progress and see which MCQs are answered/scored:
 ```bash
-python review_status.py -i MCQ-combined.json -o myRESULTSdir
+python review_status.py -i MCQ-combined.json -o _RESULTS
 ```
 - This script identifies missing or incomplete processing steps.
 
@@ -219,16 +219,16 @@ python review_status.py -i MCQ-combined.json -o myRESULTSdir
 are to use an OpenAI model like *gpt-4o*.
 
 Examples of running *generate_answers.py*:
-* `python generate_answers.py -o RESULTS -i MCQs.json -m openai:o1-mini.json`
-  * Uses the OpenAI model `o1-mini` to generate answers for MCQs in `MCQs.json` and stores results in the `RESULTS` directory, in a file named `answers_openai:o1-mini.json`
-* `python generate_answers.py -o RESULTS -i MCQs.json -m "pb:argonne-private/AuroraGPT-IT-v4-0125`
-  * Uses the Huggingface model `argonne-private/AuroraGPT-IT-v4-0125`, running on a Polaris compute node started via PBS, to generate answers for the same MCQs. Results are placed in `RESULTS/answers_pb:argonne-private+AuroraGPT-IT-v4-0125.json`
+* `python generate_answers.py -o _RESULTS -i MCQs.json -m openai:o1-mini.json`
+  * Uses the OpenAI model `o1-mini` to generate answers for MCQs in `MCQs.json` and stores results in the `_RESULTS` directory, in a file named `answers_openai:o1-mini.json`
+* `python generate_answers.py -o _RESULTS -i MCQs.json -m "pb:argonne-private/AuroraGPT-IT-v4-0125`
+  * Uses the Huggingface model `argonne-private/AuroraGPT-IT-v4-0125`, running on a Polaris compute node started via PBS, to generate answers for the same MCQs. Results are placed in `_RESULTS/answers_pb:argonne-private+AuroraGPT-IT-v4-0125.json`
  
 Examples of running `score_answers.py`:
-* `python score_answers.py -o RESULTS -i MCQs.json -a openai:o1-mini.json -b openai:gpt-4o`
-  * Uses the OpenAI model `gpt-4o` to score answers for MCQs in `MCQs.json` and stores results in `RESULTS` directory, in a file named `answers_openai:o1-mini.json`
-* `python score_answers.py -o RESULTS -a pb:argonne-private/AuroraGPT-IT-v4-0125 -b openai:gpt-4o`
-  * Uses the OpenAI model gpt-4o to score answers previously generated for model `pb:argonne-private/AuroraGPT-IT-v4-0125`, and assumed to be located in a file `RESULTS/answers_pb:argonne-private+AuroraGPT-IT-v4-0125.json`, as above. Places results in file `RESULTS/scores_pb:argonne-private+AuroraGPT-IT-v4-0125:openai:gpt-4o.json`.
+* `python score_answers.py -o _RESULTS -i MCQs.json -a openai:o1-mini.json -b openai:gpt-4o`
+  * Uses the OpenAI model `gpt-4o` to score answers for MCQs in `MCQs.json` and stores results in `_RESULTS` directory, in a file named `answers_openai:o1-mini.json`
+* `python score_answers.py -o _RESULTS -a pb:argonne-private/AuroraGPT-IT-v4-0125 -b openai:gpt-4o`
+  * Uses the OpenAI model gpt-4o to score answers previously generated for model `pb:argonne-private/AuroraGPT-IT-v4-0125`, and assumed to be located in a file `_RESULTS/answers_pb:argonne-private+AuroraGPT-IT-v4-0125.json`, as above. Places results in file `_RESULTS/scores_pb:argonne-private+AuroraGPT-IT-v4-0125:openai:gpt-4o.json`.
  
 
 ## Notes on different model execution locations
