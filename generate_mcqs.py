@@ -202,7 +202,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
             {step3_output}
             """
             #debugging
-            config.logger.info("JSON to fix: {step3_output}")
+            config.logger.info(f"JSON to fix: {step3_output}")
             try:
                 fixed_json_output = model.run(
                     system_prompt="You are a strict JSON converter.",
