@@ -4,7 +4,7 @@
 # Model Defaults
 # Prompts (system and user messges)
 
-# Model #
+# Model 
 # temperature, base model, tokenizer applied to whatever model is specified
 # on the command line. Model name below is used if no model is specified on 
 # the comment line.
@@ -22,7 +22,8 @@ model:
 quality:
   minScore:    7
 
-# Prompts #
+# Prompts for generate_mcqs.py
+# 
 # Iteration with model to generate MCQ Q/A pairs
 #
   
@@ -59,7 +60,7 @@ prompts:
     augmented_chunk:
     {augmented_chunk}
 
-  # Step 3
+  # Step 33
   system_message_3: |
     You are a helpful assistant that evaluates how well an answer matches the question in context of the augmented_chunk. Return your evaluation strictly as valid JSON with no additional text, with precisely three key-value pairs: ANSWER, SCORE, and COMMENT. No additional formatting or text shoud be included, just these three key-value pairs in valid JSON format.
   user_message_3: |

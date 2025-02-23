@@ -216,7 +216,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
             chunks_successful +=1
 
         except json.JSONDecodeError:
-            config.logger.warning("JSON parsing failed. Trying to fix output...")
+            config.logger.info("JSON parsing failed. Trying to fix output...")
             fix_prompt = f"""
             Convert the following text strictly into valid JSON of the form:
             {{"answer":"...","score":9}}
@@ -226,7 +226,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
             {step3_output}
             """
             #debugging
-            config.logger.info(f"JSON to fix: {step3_output}")
+            #config.logger.info(f"JSON to fix: {step3_output}")
             try:
                 fixed_json_output = model.run(
                     system_prompt="You are a strict JSON converter.",
@@ -240,7 +240,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
                         raise ValueError(f"Expected a JSON object but got: {parsed_json}")
                 except json.JSONDecodeError as e:
                     if "Expecting value: line 1 column 1" in str(e):
-                        config.logger.warning("Output is not valid JSON (empty or invalid): " + step3_output)
+                        config.logger.info("Output is not valid JSON (empty or invalid): " + step3_output)
                     else:
                         config.logger.warning(f"JSON decoding error: {e}")
                     continue
