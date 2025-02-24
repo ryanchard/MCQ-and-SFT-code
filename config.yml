@@ -62,7 +62,7 @@ prompts:
 
   # Step 33
   system_message_3: |
-    You are a helpful assistant that evaluates how well an answer matches the question in context of the augmented_chunk. Return your evaluation strictly as valid JSON with no additional text, with precisely three key-value pairs: ANSWER, SCORE, and COMMENT. No additional formatting or text shoud be included, just these three key-value pairs in valid JSON format.
+    You are a helpful assistant that evaluates how well an answer matches the question in context of the augmented_chunk. Return your evaluation strictly as valid JSON with no additional text, with precisely three key-value pairs: answer, score, and comment. No additional formatting or text shoud be included, just these three key-value pairs in valid JSON format.
   user_message_3: |
     augmented_chunk:
     {augmented_chunk}
@@ -75,5 +75,5 @@ prompts:
     2. A single integer 'score' from 1 to 10 for how well the answer addresses the question based on the augmented_chunk.
     3. A brief comment explaining why this answer is correct.
 
-    Output must be valid JSON with the three key-value pairs of ANSWER, SCORE, and COMMENT.
+    Output must be valid JSON with the three key-value pairs of answer, score, and comment.
 
