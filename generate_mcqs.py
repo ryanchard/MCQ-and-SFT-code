@@ -83,7 +83,7 @@ def split_text_into_chunks(text: str, chunk_size: int = CHUNK_SIZE) -> list:
     Split the text into chunks of ~chunk_size words, respecting sentence
     boundaries using spaCy for sentence segmentation.
     """
-    nlp = spacy.load("en_core_web_sm")
+    nlp = spacy.load("en_core_web_sm") # FIX_LATER: should be outside the fctn or we repeatedly load it
     doc = nlp(text)
     sentences = [sent.text.strip() for sent in doc.sents]
 
@@ -141,7 +141,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
             config.logger.warning(f"Error summarizing and expanding chunk: {e}")
             # Check for fatal errors
             if "401" in str(e) or "Unauthorized" in str(e):
-                sys.exit("Model API Authentication failed. ({str(e}) Exiting.")
+                sys.exit(f"Model API Authentication failed. ({str(e)}) Exiting.")
             pbar.update(1)
             chunks_failed +=1
             continue
@@ -197,7 +197,8 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
 
             if isinstance(model_score, int) and model_score > config.minScore:
                 #debugging
-                config.logger.info(f"minScore set to {config.minScore}.")
+                config.logger.info(f"mcq generated, score {model_score} > {config.minScore}.")
+                chunks_successful +=1
 
                 qa_pairs.append({
                     "file": filename,
@@ -209,60 +210,57 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
                     "answer": model_answer,
                     "text": augmented_chunk
                 })
+            else:
+                chunks_failed +=1
 
-            # debugging
-            #config.logger.info("Chunk successful")
+            if not isinstance(model_score, int):
+                config.logger.info(f"Score {model_score} not an int")
 
-            chunks_successful +=1
 
         except json.JSONDecodeError:
             config.logger.info("JSON parsing failed. Trying to fix output...")
             fix_prompt = f"""
-            Convert the following text strictly into valid JSON of the form:
-            {{"answer":"...","score":9}}
-            Nothing else, no additional text.
+            Convert the following text strictly into valid JSON with three key/value
+            pairs: question, answer, score.  Nothing else, no additional text.
 
             TEXT TO FIX:
             {step3_output}
             """
-            #debugging
-            #config.logger.info(f"JSON to fix: {step3_output}")
+
             try:
                 fixed_json_output = model.run(
                     system_prompt="You are a strict JSON converter.",
                     user_prompt=fix_prompt
                 )
                 try:
-                    parsed_json = json.loads(step3_output)
+                    parsed_json = json.loads(fixed_json_output)
                     if isinstance(parsed_json, str):
                         parsed_json = json.loads(parsed_json)
-                    if not isinstance(parsed_json, dict):
-                        raise ValueError(f"Expected a JSON object but got: {parsed_json}")
                 except json.JSONDecodeError as e:
                     if "Expecting value: line 1 column 1" in str(e):
-                        config.logger.info("Output is not valid JSON (empty or invalid): " + step3_output)
+                        config.logger.info("Output is not valid JSON (empty or invalid): ")
                     else:
-                        config.logger.warning(f"JSON decoding error: {e}")
+                        config.logger.info(f"JSON decoding error: {e}")
                     continue
 
                 model_answer = parsed_json.get("answer", "").strip()
                 model_score = parsed_json.get("score", 0)
                 pbar.set_postfix_str(f"Score: {model_score}")
 
-                if isinstance(model_score, int) and model_score > 7:
+                if isinstance(model_score, int) and model_score > config.minScore:
                     qa_pairs.append({
                         "question": generated_question,
                         "answer": model_answer,
                         "text": augmented_chunk
                     })
             except Exception as e:
-                config.logger.warning(f"Could not fix JSON automatically: {e}")
+                config.logger.info(f"Could not fix JSON automatically: {e}")
                 pbar.update(1)
                 chunks_failed +=1
                 continue
 
         except Exception as e:
-            config.logger.warning(f"Error in verifying question/answer: {e}")
+            config.logger.info(f"Error in verifying question/answer: {e}")
             pbar.update(1)
             chunks_failed +=1
             continue
@@ -312,13 +310,10 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
         # Fallback if only JSONL files exist (estimate by summing lines)
         approximate_chunk_count = sum(line_counts)
 
-    # Create a global tqdm progress bar for chunk processing
-#    pbar = tqdm(total=approximate_chunk_count, desc="Chunks processed", unit="chunk")
+    # Create a global tqdm progress bar for chunk processing (suppress if not in quiet mode)
     if config.get_quiet_mode():
-        # In quiet mode, we want to show the progress bar.
         pbar = tqdm(total=approximate_chunk_count, desc="Chunks processed", unit="chunk")
     else:
-        # In non-quiet mode, we suppress the progress bar.
         pbar = NoOpTqdm()
 
 
@@ -379,7 +374,7 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
     config.logger.info(
         f"Processed file in "
         f"{human_readable_time(total_time)}.\n      "
-        f"{chunks_successful} chunks succeeded, {chunks_failed} failed.  | "
+        f"{chunks_successful} MCQ's saved, {chunks_failed} failed.  | "
         f"Prompt/answer pairs (score > 7) saved to {output_dir}."
     )
 
