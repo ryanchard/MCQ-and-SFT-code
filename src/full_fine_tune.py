@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import argparse
 import torch
 from trl import SFTTrainer

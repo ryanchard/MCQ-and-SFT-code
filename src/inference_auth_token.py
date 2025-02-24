@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import globus_sdk
 from globus_sdk.login_flows import LocalServerLoginFlowManager # Needed to access globus_sdk.gare

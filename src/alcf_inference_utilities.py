@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import requests
 
 def get_names_of_alcf_chat_models(alcf_access_token):
