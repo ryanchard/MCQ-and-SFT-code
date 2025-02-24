@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4 - 24Feb (CeC)
+- improved consistency of valid JSON creation (via more pointed prompts)
+- report stats for each file - MCQ created and misfires (generally invalid
+  JSON), i.e., success or failure generating an MCQ for each chunk.
 ## v0.3 - 21Feb (CeC)
 - replaced print statements with logging
 - implemented tqdm progress bar (including a null stub to suppress when in default
