@@ -13,7 +13,7 @@ if not logger.handlers:
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
-def load_config(file_path="config.yml"):
+def load_config(file_path="../config.yml"):
     """
     Safely load configuration settings from a YAML file.
     """
