@@ -102,7 +102,7 @@ cd src
 ### 1. Convert PDFs to JSON
 Extract text from PDFs using a simple parser:
 ```bash
-python simple_parse.py -i _PAPERS -o _JSON
+python simple_parse.py -i ../_PAPERS -o ../_JSON
 ```
 Alternatively, you can use **AdaParse** (higher-quality parser, still in testing). 
 [More details](https://github.com/7shoe/AdaParse/tree/main)
@@ -147,7 +147,7 @@ defaults to *openai:gpt-4o*.
 
 
    ```bash
-   python generate_mcqs.py -i _JSON \
+   python generate_mcqs.py -i ../_JSON \
         -o _MCQ \
         -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
    ```
@@ -156,7 +156,7 @@ defaults to *openai:gpt-4o*.
 
 ### 3. Combine multiple MCQ JSON files into a single file
    ```bash
-   python combine_json_files.py -i _MCQ -o MCQ-combined.json
+   python combine_json_files.py -i ../_MCQ -o ../MCQ-combined.json
    ```
 
 ---
@@ -166,7 +166,7 @@ If you want to randomly select a subset of MCQs from the generated JSON files, u
 `select_mcqs_at_random.py`, specifying the number of MCQs to select.  For example, to select
 17 MCQs:
 ```bash
-python select_mcqs_at_random.py -i MCQ-combined.json -o MCQ-subset.json -n 17
+python select_mcqs_at_random.py -i ../MCQ-combined.json -o ../MCQ-subset.json -n 17
 ```
 
 ---
@@ -178,7 +178,7 @@ use a differnet model than above here. Note the form for specifying the model is
 whose endpoint is running at <locn> = `alcf`..
 
 ```bash
-python generate_answers.py -i MCQ-subset.json \
+python generate_answers.py -i ../MCQ-subset.json \
        -o _RESULTS \
        -m 'alcf:meta-llama/Meta-Llama-3-70B-Instruct'
 ```
@@ -195,7 +195,7 @@ to evaluate the answers we created in the previous step with
 `alcf:meta-llama/Meta-Llama-3-70B-Instruct`
 
 ```bash
-python score_answers.py -o _RESULTS \
+python score_answers.py -o ../_RESULTS \
        -a 'alcf:meta-llama/Meta-Llama-3-70B-Instruct' \
        -b 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
 ```
@@ -208,11 +208,13 @@ python score_answers.py -o _RESULTS \
 ### 7. Review MCQ Generation and Scoring Status
 To check progress and see which MCQs are answered/scored:
 ```bash
-python review_status.py -i MCQ-combined.json -o _RESULTS
+python review_status.py -i ../MCQ-combined.json -o ../_RESULTS
 ```
 - This script identifies missing or incomplete processing steps.
 
 ---
+
+## below this point the paths, etc. are outdated and need to be fixed
 
 ## Additional Notes
 - This pipeline ensures **high-quality multiple-choice questions** are generated and scored using AI.
@@ -224,9 +226,9 @@ python review_status.py -i MCQ-combined.json -o _RESULTS
 are to use an OpenAI model like *gpt-4o*.
 
 Examples of running *generate_answers.py*:
-* `python generate_answers.py -o _RESULTS -i MCQs.json -m openai:o1-mini.json`
+* `python generate_answers.py -o ../_RESULTS -i ../_MCQ -m openai:o1-mini.json`
   * Uses the OpenAI model `o1-mini` to generate answers for MCQs in `MCQs.json` and stores results in the `_RESULTS` directory, in a file named `answers_openai:o1-mini.json`
-* `python generate_answers.py -o _RESULTS -i MCQs.json -m "pb:argonne-private/AuroraGPT-IT-v4-0125`
+* `python generate_answers.py -o ../_RESULTS -i MCQs.json -m "pb:argonne-private/AuroraGPT-IT-v4-0125`
   * Uses the Huggingface model `argonne-private/AuroraGPT-IT-v4-0125`, running on a Polaris compute node started via PBS, to generate answers for the same MCQs. Results are placed in `_RESULTS/answers_pb:argonne-private+AuroraGPT-IT-v4-0125.json`
  
 Examples of running `score_answers.py`:
