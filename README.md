@@ -97,7 +97,7 @@ then create and activate that env.)
 ### 1. Convert PDFs to JSON
 Extract text from PDFs using a simple parser:
 ```bash
-python simple_parse.py -i _PAPERS -o _JSON
+python ./src/simple_parse.py -i _PAPERS -o _JSON
 ```
 Alternatively, you can use **AdaParse** (higher-quality parser, still in testing). 
 [More details](https://github.com/7shoe/AdaParse/tree/main)
@@ -109,7 +109,7 @@ To generate MCQs from parsed JSON files:
 
 1. **Authenticate with ALCF inference service (if not already done):**
    ```bash
-   python inference_auth_token.py authenticate
+   python ./etc/inference_auth_token.py authenticate
    ```
 2. **(Optional) Check which models are running**
 You may wish to check to see which models are currently running as waiting for a model to load can
@@ -117,7 +117,7 @@ take 10-15 minutes (see
 [ALCF Inference service](https://github.com/argonne-lcf/inference-endpoints)). Get the list of running
 and queued models as follows:
    ```bash
-   access_token=$(python inference_auth_token.py get_access_token)
+   access_token=$(./etc/inference_auth_token.py get_access_token)
    curl -X GET "https://data-portal-dev.cels.anl.gov/resource_server/sophia/jobs" \
        -H "Authorization: Bearer ${access_token}" | jq
    ```
@@ -127,7 +127,7 @@ Piping the output to ``jq`` (Command-line JSON processor) makes it much easier t
  - If you are not connected via VPN or to Argonne-auth at the lab then you'll get an error such as *curl: (6) Could not resolve host: data-portal-dev.cels.anl.gov*.
  - If it's been a while since you authenticated, you'll get a "Permission denied" error. In this case, you'll need to re-authenticate:
 ```
-python inference_auth_token.py authenticate --force
+python ./etc/inference_auth_token.py authenticate --force
 ```
 
 3. **Run MCQ generation:**
@@ -142,7 +142,7 @@ defaults to *openai:gpt-4o*.
 
 
    ```bash
-   python generate_mcqs.py -i _JSON \
+   python ./src/generate_mcqs.py -i _JSON \
         -o _MCQ \
         -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
    ```
@@ -151,7 +151,7 @@ defaults to *openai:gpt-4o*.
 
 ### 3. Combine multiple MCQ JSON files into a single file
    ```bash
-   python combine_json_files.py -i _MCQ -o MCQ-combined.json
+   python ./src/combine_json_files.py -i _MCQ -o MCQ-combined.json
    ```
 
 ---
@@ -161,7 +161,7 @@ If you want to randomly select a subset of MCQs from the generated JSON files, u
 `select_mcqs_at_random.py`, specifying the number of MCQs to select.  For example, to select
 17 MCQs:
 ```bash
-python select_mcqs_at_random.py -i MCQ-combined.json -o MCQ-subset.json -n 17
+python ./src/select_mcqs_at_random.py -i MCQ-combined.json -o MCQ-subset.json -n 17
 ```
 
 ---
@@ -173,7 +173,7 @@ use a differnet model than above here. Note the form for specifying the model is
 whose endpoint is running at <locn> = `alcf`..
 
 ```bash
-python generate_answers.py -i MCQ-subset.json \
+python ./src/generate_answers.py -i MCQ-subset.json \
        -o _RESULTS \
        -m 'alcf:meta-llama/Meta-Llama-3-70B-Instruct'
 ```
@@ -190,7 +190,7 @@ to evaluate the answers we created in the previous step with
 `alcf:meta-llama/Meta-Llama-3-70B-Instruct`
 
 ```bash
-python score_answers.py -o _RESULTS \
+python ./src/score_answers.py -o _RESULTS \
        -a 'alcf:meta-llama/Meta-Llama-3-70B-Instruct' \
        -b 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
 ```
@@ -203,7 +203,7 @@ python score_answers.py -o _RESULTS \
 ### 7. Review MCQ Generation and Scoring Status
 To check progress and see which MCQs are answered/scored:
 ```bash
-python review_status.py -i MCQ-combined.json -o _RESULTS
+python ./src/review_status.py -i MCQ-combined.json -o _RESULTS
 ```
 - This script identifies missing or incomplete processing steps.
 
@@ -219,15 +219,15 @@ python review_status.py -i MCQ-combined.json -o _RESULTS
 are to use an OpenAI model like *gpt-4o*.
 
 Examples of running *generate_answers.py*:
-* `python generate_answers.py -o _RESULTS -i MCQs.json -m openai:o1-mini.json`
+* `python ./src/generate_answers.py -o _RESULTS -i MCQs.json -m openai:o1-mini.json`
   * Uses the OpenAI model `o1-mini` to generate answers for MCQs in `MCQs.json` and stores results in the `_RESULTS` directory, in a file named `answers_openai:o1-mini.json`
-* `python generate_answers.py -o _RESULTS -i MCQs.json -m "pb:argonne-private/AuroraGPT-IT-v4-0125`
+* `python ./src/generate_answers.py -o _RESULTS -i MCQs.json -m "pb:argonne-private/AuroraGPT-IT-v4-0125`
   * Uses the Huggingface model `argonne-private/AuroraGPT-IT-v4-0125`, running on a Polaris compute node started via PBS, to generate answers for the same MCQs. Results are placed in `_RESULTS/answers_pb:argonne-private+AuroraGPT-IT-v4-0125.json`
  
 Examples of running `score_answers.py`:
-* `python score_answers.py -o _RESULTS -i MCQs.json -a openai:o1-mini.json -b openai:gpt-4o`
+* `python ./src/score_answers.py -o _RESULTS -i MCQs.json -a openai:o1-mini.json -b openai:gpt-4o`
   * Uses the OpenAI model `gpt-4o` to score answers for MCQs in `MCQs.json` and stores results in `_RESULTS` directory, in a file named `answers_openai:o1-mini.json`
-* `python score_answers.py -o _RESULTS -a pb:argonne-private/AuroraGPT-IT-v4-0125 -b openai:gpt-4o`
+* `python ./src/score_answers.py -o _RESULTS -a pb:argonne-private/AuroraGPT-IT-v4-0125 -b openai:gpt-4o`
   * Uses the OpenAI model gpt-4o to score answers previously generated for model `pb:argonne-private/AuroraGPT-IT-v4-0125`, and assumed to be located in a file `_RESULTS/answers_pb:argonne-private+AuroraGPT-IT-v4-0125.json`, as above. Places results in file `_RESULTS/scores_pb:argonne-private+AuroraGPT-IT-v4-0125:openai:gpt-4o.json`.
  
 
@@ -248,10 +248,10 @@ where `modelname` has a prefix indicating the model type/location:
 ## Code for fine-tuning programs
 ```
 # LORA fine-tuning
-python lora_fine_tune.py -i <json-file> -o <model-directory>
+python ./src/lora_fine_tune.py -i <json-file> -o <model-directory>
 
 # Full fine tune
-python full_fine_tune.py -i <json-file> -o <model-directory>
+python ./src/full_fine_tune.py -i <json-file> -o <model-directory>
 ```
 Note:
 * You need a file `hf_access_token.txt` if you want to publish models to HuggingFace.
@@ -262,15 +262,15 @@ Note:
 
 Determine what models are currently running on ALCF inference service (see below for more info)
 ```
-python check_alcf_service_status.py
+python ./etc/check_alcf_service_status.py
 ```
 Determine what answers have been generated and scored, and what additional runs could be performed, _given running models_, to generate and score additional answers. (You may want to submit runs to start models. Use `-m` flag to see what could be useful to submit.) 
 ```
-python review_status.py -o <result-directory>
+python ./src/review_status.py -o <result-directory>
 ```
 Perform runs of `generate_answers` and `grade_answers.py` to generate missing outputs. (See below for more info)
 ```
-python run_missing_generates.py -o <result-directory>
+python ./src/run_missing_generates.py -o <result-directory>
 ```
 
 ### More on `check_alcf_service_status.py` 
@@ -281,7 +281,7 @@ and lists models currently running or queued to run. E.g., as follows, which sho
 models running and one queued. Models that are not accessed for some period are shut
 down and queued models started. A request to a model that is not running adds it to the queue.
 ```
-% python check_alcf_service_status.py
+% python ./etc/check_alcf_service_status.py
 Running: ['meta-llama/Meta-Llama-3-70B-Instruct', 'meta-llama/Meta-Llama-3-8B-Instruct', 'mistralai/Mistral-7B-Instruct-v0.3']
 Starting: ['N/A']
 Queued : []
@@ -296,10 +296,10 @@ Note:
 The ALCF inference service hosts many models, as [listed here](https://github.com/argonne-lcf/inference-endpoints?tab=readme-ov-file#-available-models). At any one time, zero or more *running*, zero or more are *queued*, and the rest are neither running not queued. (See below for how to use `check_alcf_service_status.py` to determine which.)
 You may want to run against all available models. To do so, you can specify `-a all`, which works out what commands are needed to process specified MCQs with all *running models*. Adding `-q` also considers *queued models*, and `-s` *non-running models*. For example, when I ran the following command I was informed of the commands to run three models for which results are not found:
 ```
-% python run_missing_generates.py -i 100-papers-qa.json -o output_files -a all -m 100 -s
-python generate_and_grade_answers.py -i 100-papers-qa.json -o outputs -a 'Qwen/Qwen2-VL-72B-Instruct' -b 'gpt-4o' -c -q -s 0 -e 100
-python generate_and_grade_answers.py -i 100-papers-qa.json -o outputs -a 'deepseek-ai/DeepSeek-V3' -b 'gpt-4o' -c -q -s 0 -e 100
-python generate_and_grade_answers.py -i 100-papers-qa.json -o outputs -a 'mgoin/Nemotron-4-340B-Instruct-hf' -b 'gpt-4o' -c -q -s 0 -e 100
+% python ./src/run_missing_generates.py -i 100-papers-qa.json -o output_files -a all -m 100 -s
+python ./src/generate_and_grade_answers.py -i 100-papers-qa.json -o outputs -a 'Qwen/Qwen2-VL-72B-Instruct' -b 'gpt-4o' -c -q -s 0 -e 100
+python ./src/generate_and_grade_answers.py -i 100-papers-qa.json -o outputs -a 'deepseek-ai/DeepSeek-V3' -b 'gpt-4o' -c -q -s 0 -e 100
+python ./src/generate_and_grade_answers.py -i 100-papers-qa.json -o outputs -a 'mgoin/Nemotron-4-340B-Instruct-hf' -b 'gpt-4o' -c -q -s 0 -e 100
 ```
 
 `run_missing_generates.py` has options as follows:
