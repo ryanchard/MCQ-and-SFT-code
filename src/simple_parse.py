@@ -78,7 +78,6 @@ def process_directory(input_dir: str, output_dir: str = "output_files"):
         (text, parser) = extract_text_from_pdf(file_path)
 
         json_structure = {'path': file_path, 'text': text, 'parser':parser}
-        #json_structure = clean_data(json_structure)
 
         with open(out_path, 'w', encoding='utf-8') as out_f:
             json.dump(json_structure, out_f, ensure_ascii=False, indent=2)
@@ -87,8 +86,11 @@ def process_directory(input_dir: str, output_dir: str = "output_files"):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Program to extract text from PDFs and store in JSON files')
-    parser.add_argument('-i','--input',  help='Input directory',  required=True)
-    parser.add_argument('-o','--output', help='Output directory', required=True)
+    parser.add_argument('-i', '--input',  help='Directory containing input PDF files',
+                        default=config.papers_dir)
+    parser.add_argument('-o', '--output', help='Output directory for JSON files',
+                        default=config.json_dir)
+
     args = parser.parse_args()
                                             
     input_directory  = args.input
