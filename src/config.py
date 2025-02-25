@@ -53,18 +53,3 @@ defaultTokenizer =   model_config.get("Tokenizer", "None")
 # Quality (MCQ) settings
 minScore           = quality.get("minScore", 7)
 
-# Quiet mode  (-q or --quiet)
-# (replaces INFO log msgs with a progress bar)
-quietMode = False
-
-def set_quiet_mode(enable: bool):
-    global quietMode
-    quietMode = enable
-    if quietMode:
-        logger.setLevel(logging.WARNING)
-    else:
-        logger.setLevel(logging.INFO)
-
-def get_quiet_mode() -> bool:
-    return quietMode
-
