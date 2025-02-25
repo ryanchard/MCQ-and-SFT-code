@@ -6,10 +6,9 @@ import os
 import statistics
 import requests
 import time
-
 import argparse
-#import torch
 
+import config
 from model_access import Model
 
 """
@@ -27,12 +26,15 @@ if __name__ == "__main__":
 # ---------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(description='Program to use LLM to provide answers to MCQs')
-    parser.add_argument('-i','--input', help='MCQs input file', required=True)
     parser.add_argument('-m','--model', help='model', required=True)
-    parser.add_argument('-o','--output', help='Output directory', required=True)
     parser.add_argument('-s','--start', help='Number to start at in MCQs file', default='0')
     parser.add_argument('-e','--end', help='End number in MCQs file', default='all')
-    parser.add_argument('-c', "--cache-dir", type=str, default=os.getenv("HF_HOME"), help="Custom cache directory for Hugging Face")
+    parser.add_argument('-c', "--cache-dir", type=str, default=os.getenv("HF_HOME"),
+                        help="Custom cache directory for Hugging Face")
+    parser.add_argument('-i', '--input',  help='Directory containing input JSON/JSONL files',
+                        default=config.json_dir)  
+    parser.add_argument('-o', '--output', help='Output directory for Results',
+                        default=config.mcq_dir)
     args = parser.parse_args()
 
     # Set HF_HOME if using custom cache directory

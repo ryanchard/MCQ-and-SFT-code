@@ -3,16 +3,18 @@
 import json
 from pathlib import Path
 import argparse
+import config
 
 # Set up argument parsing
 parser = argparse.ArgumentParser(description="Combine JSON files in a directory into a single JSON file.")
-parser.add_argument("-i", "--inputdir", required=True, help="Input directory containing JSON files")
-parser.add_argument("-o", "--output", required=True, help="Output file for the combined JSON")
+parser.add_argument('-i', '--input',  help='Directory containing input MCQ files',
+                    default=config.mcq_dir)
+parser.add_argument('-o', '--output', help='Output file for combined MCQs')
 
 args = parser.parse_args()
 
 # Get input directory and output file from arguments
-input_directory = args.inputdir
+input_directory = args.input
 output_file = args.output
 
 # Initialize an empty list to hold all JSON objects
