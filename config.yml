@@ -1,8 +1,17 @@
 #
 ## Configuration
 #
+# Data files and directories
+#
+directories:
+  papers:   _PAPERS       # Where PDF documents reside.
+  json:     _JSON         # Where the parsed JSON files are stored.
+  mcq:      _MCQ          # Where your MCQ processing code will read/write.
+  results: _RESULTS       # Where final results will be stored.
+
 # Model Defaults
 # Prompts (system and user messges)
+# Generate_mcq settings
 
 # Model 
 # temperature, base model, tokenizer applied to whatever model is specified
