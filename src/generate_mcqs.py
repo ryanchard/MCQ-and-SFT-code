@@ -272,7 +272,8 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
     config.logger.info("")
     return qa_pairs
 
-def process_directory(model, input_dir: str, output_dir: str = "output_files"):
+def process_directory(model, input_dir: str, output_dir: str = "output_files", use_progress_bar: bool = True):
+
     """
     Main function to:
     1) Iterate over all JSON/JSONL files in a directory.
@@ -310,11 +311,12 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files"):
         # Fallback if only JSONL files exist (estimate by summing lines)
         approximate_chunk_count = sum(line_counts)
 
-    # Create a global tqdm progress bar for chunk processing (suppress if not in quiet mode)
-    if config.get_quiet_mode():
+    # Create a global tqdm progress bar in default modefor chunk processing (suppress if in -v or -q mode))
+    if use_progress_bar:
         pbar = tqdm(total=approximate_chunk_count, desc="Chunks processed", unit="chunk")
     else:
         pbar = NoOpTqdm()
+
 
 
     # Iterate over files
@@ -421,17 +423,23 @@ if __name__ == "__main__":
     parser.add_argument('-o','--output', help='Output directory', required=True)
     parser.add_argument('-m','--model', help='Model to use to generate MCQs',
                         default=config.defaultModel)
-    parser.add_argument('-q','--quiet', help='Suppress informational msgs',
-                        action="store_true")
+    parser.add_argument('-q','--quiet',   action='store_true',   
+                        help='No progress bar or messages')       
+    parser.add_argument('-v','--verbose', action='store_true',    
+                        help='Enable verbose logging')            
+
     args = parser.parse_args()
 
-    #if args.quiet:
-    #    pbar = tqdm(total=100, desc="Processing", unit="chunk")  # ...and progress bar
-    #else:
-    #    pbar = NoOpTqdm()         # Default: Don't show progress bar (too noisy w/ INFO)
-
-    config.set_quiet_mode(args.quiet)
-    #logging.basicConfig(level=log_level, format='%(levelname)s: %(message)s')
+    # Decide logging level and whether to show a progress bar 
+    if args.verbose:  
+        config.logger.setLevel(logging.INFO)    
+        use_progress_bar = False                
+    elif args.quiet:  
+        config.logger.setLevel(logging.CRITICAL)  
+        use_progress_bar = False                 
+    else:  # default case 
+        config.logger.setLevel(logging.WARNING)  
+        use_progress_bar = True                 
 
     input_directory = args.input
     output_json     = args.output
@@ -443,7 +451,8 @@ if __name__ == "__main__":
     os.makedirs(output_json, exist_ok=True)
 
     try:
-        process_directory(model, input_directory, output_json)
+        process_directory(model, input_directory, output_json, use_progress_bar=use_progress_bar)
+
     except KeyboardInterrupt:
         print("EXIT: Execution interrupted by user")
         sys.exit(0)
