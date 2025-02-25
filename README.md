@@ -113,7 +113,7 @@ To generate MCQs from parsed JSON files:
 
 1. **Authenticate with ALCF inference service (if not already done):**
    ```bash
-   python inference_auth_token.py authenticate
+   python src/inference_auth_token.py authenticate
    ```
 2. **(Optional) Check which models are running**
 You may wish to check to see which models are currently running as waiting for a model to load can
@@ -121,7 +121,7 @@ take 10-15 minutes (see
 [ALCF Inference service](https://github.com/argonne-lcf/inference-endpoints)). Get the list of running
 and queued models as follows:
    ```bash
-   access_token=$(python inference_auth_token.py get_access_token)
+   access_token=$(python src/inference_auth_token.py get_access_token)
    curl -X GET "https://data-portal-dev.cels.anl.gov/resource_server/sophia/jobs" \
        -H "Authorization: Bearer ${access_token}" | jq
    ```
@@ -131,7 +131,7 @@ Piping the output to ``jq`` (Command-line JSON processor) makes it much easier t
  - If you are not connected via VPN or to Argonne-auth at the lab then you'll get an error such as *curl: (6) Could not resolve host: data-portal-dev.cels.anl.gov*.
  - If it's been a while since you authenticated, you'll get a "Permission denied" error. In this case, you'll need to re-authenticate:
 ```
-python inference_auth_token.py authenticate --force
+python src/inference_auth_token.py authenticate --force
 ```
 
 3. **Run MCQ generation:**
@@ -146,7 +146,7 @@ defaults to *openai:gpt-4o*.
 
 
    ```bash
-   python generate_mcqs.py -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
+   python src/generate_mcqs.py -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
    ```
 **Note:** You can specify input and output with, e.g., `-i _JSON -o _MCQ`, and the
 model with -m as shown here; otherwise the
@@ -156,7 +156,7 @@ code will default to the default model and directories specified in `config.yml`
 
 ### 3. Combine multiple MCQ JSON files into a single file
    ```bash
-   python combine_json_files.py -o MCQ-combined.json
+   python src/combine_json_files.py -o MCQ-combined.json
    ```
 Here you can override the settings in config.yml by specifying -i on the command line,
 but you must specify the filename for your combined file as shown here.
@@ -168,7 +168,7 @@ If you want to randomly select a subset of MCQs from the generated JSON files, u
 `select_mcqs_at_random.py`, specifying the number of MCQs to select.  For example, to select
 17 MCQs:
 ```bash
-python select_mcqs_at_random.py -i MCQ-combined.json -o MCQ-subset.json -n 17
+python src/select_mcqs_at_random.py -i MCQ-combined.json -o MCQ-subset.json -n 17
 ```
 Here you must specify the filenames for your combined and subset files as shown here.
 
@@ -181,7 +181,7 @@ use a differnet model than above here. Note the form for specifying the model is
 whose endpoint is running at <locn> = `alcf`..
 
 ```bash
-python generate_answers.py -i MCQ-subset.json \
+python src/generate_answers.py -i MCQ-subset.json \
        -m 'alcf:meta-llama/Meta-Llama-3-70B-Instruct'
 ```
 Shown here is `MCQ-subset.json` assuming you performed step 4; otherwise use `MCQ-combined.json` 
@@ -197,7 +197,7 @@ to evaluate the answers we created in the previous step with
 `alcf:meta-llama/Meta-Llama-3-70B-Instruct`
 
 ```bash
-python score_answers.py \
+python src/score_answers.py \
        -a 'alcf:meta-llama/Meta-Llama-3-70B-Instruct' \
        -b 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
 ```
@@ -212,7 +212,7 @@ be overriden with -i and/or -o on the command line.
 ### 7. Review MCQ Generation and Scoring Status
 To check progress and see which MCQs are answered/scored:
 ```bash
-python review_status.py -i MCQ-combined.json 
+python src/review_status.py -i MCQ-combined.json 
 ```
 - This script identifies missing or incomplete processing steps.
 - As earlier, output defaults to the directory specified in config.yml 
@@ -232,9 +232,9 @@ python review_status.py -i MCQ-combined.json
 are to use an OpenAI model like *gpt-4o*.
 
 Examples of running *generate_answers.py*:
-* `python generate_answers.py -o ../_RESULTS -i ../_MCQ -m openai:o1-mini.json`
+* `python src/generate_answers.py -o ../_RESULTS -i ../_MCQ -m openai:o1-mini.json`
   * Uses the OpenAI model `o1-mini` to generate answers for MCQs in `MCQs.json` and stores results in the `_RESULTS` directory, in a file named `answers_openai:o1-mini.json`
-* `python generate_answers.py -o ../_RESULTS -i MCQs.json -m "pb:argonne-private/AuroraGPT-IT-v4-0125`
+* `python src/generate_answers.py -o ../_RESULTS -i MCQs.json -m "pb:argonne-private/AuroraGPT-IT-v4-0125`
   * Uses the Huggingface model `argonne-private/AuroraGPT-IT-v4-0125`, running on a Polaris compute node started via PBS, to generate answers for the same MCQs. Results are placed in `_RESULTS/answers_pb:argonne-private+AuroraGPT-IT-v4-0125.json`
  
 Examples of running `score_answers.py`:
