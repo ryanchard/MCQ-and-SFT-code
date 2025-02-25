@@ -197,7 +197,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
 
             if isinstance(model_score, int) and model_score > config.minScore:
                 #debugging
-                config.logger.info(f"mcq generated, score {model_score} > {config.minScore}.")
+                #config.logger.info(f"mcq generated, score {model_score} > {config.minScore}.")
                 chunks_successful +=1
 
                 qa_pairs.append({
@@ -218,7 +218,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
 
 
         except json.JSONDecodeError:
-            config.logger.info("JSON parsing failed. Trying to fix output...")
+            #config.logger.info("JSON parsing failed. Trying to fix output...")
             fix_prompt = f"""
             Convert the following text strictly into valid JSON with three key/value
             pairs: question, answer, score.  Nothing else, no additional text.
