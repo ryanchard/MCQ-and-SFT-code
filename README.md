@@ -7,7 +7,7 @@ Here we describe Python programs for:
 * Fine-tuning models based on supplied data
 * Other useful things
 
-Please email (*foster* | *stevens* | *catlett) at *anl.gov* if you see things that are unclear or missing.
+Please email {foster|stevens|catlett}@anl.gov if you see things that are unclear or missing.
 
 ## Set up to access ALCF Inference Service 
 
