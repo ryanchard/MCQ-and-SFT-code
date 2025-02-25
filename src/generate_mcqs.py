@@ -419,8 +419,10 @@ def get_model_parameters(model):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Program to generate MCQs from JSONL or JSON files')
-    parser.add_argument('-i','--input', help='QA input file', required=True)
-    parser.add_argument('-o','--output', help='Output directory', required=True)
+    parser.add_argument('-i', '--input',  help='Directory containing input JSON/JSONL files',
+                        default=config.json_dir)  
+    parser.add_argument('-o', '--output', help='Output directory for MCQs',
+                        default=config.mcq_dir)
     parser.add_argument('-m','--model', help='Model to use to generate MCQs',
                         default=config.defaultModel)
     parser.add_argument('-q','--quiet',   action='store_true',   

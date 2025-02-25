@@ -13,7 +13,8 @@ if not logger.handlers:
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
-def load_config(file_path="../config.yml"):
+# run this from top level of repo
+def load_config(file_path="config.yml"):
     """
     Safely load configuration settings from a YAML file.
     """
@@ -53,3 +54,9 @@ defaultTokenizer =   model_config.get("Tokenizer", "None")
 # Quality (MCQ) settings
 minScore           = quality.get("minScore", 7)
 
+# Directories for user data
+directories = _config.get("directories", {})
+papers_dir  = directories.get("papers", "_PAPERS")
+json_dir    = directories.get("json", "_JSON")
+mcq_dir     = directories.get("mcq", "_MCQ")
+results_dir = directories.get("results", "_RESULTS")
