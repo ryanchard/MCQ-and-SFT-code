@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.5 - 24Feb (CeC)
+- changed strategy on logging in generate_mcqs.py.  Default is now progress bar
+  (no logger.info chatter). -q or --quiet is now totally silent unless critical 
+  errors are thrown.  -v or --verbose to get progress messages (logger.info) for
+  debugging prompts, etc.
+- reorganized repo to put .py scripts in src directory - adjusted the various
+  pathnames in scripts and README.md
+
 ## v0.4 - 24Feb (CeC)
 - improved consistency of valid JSON creation (via more pointed prompts)
 - report stats for each file - MCQ created and misfires (generally invalid
