@@ -56,25 +56,25 @@ and **scores** of those answers.
 
 #### Set Up Your Working Directory
 Ensure your working directory has subdirectories for storing input and output files. The names
-of files and folders don't matter, but these are the names used in the steps below (so
+of files and folders don't matter, but these are the names specified in config.yml.  If you want
+to place data elsewhere, update the directories secion in `config.yml`
 if you are just starting out, use these and you can copy/paste the steps).
 
-- `_PAPERS/` → Stores **original PDF papers**.
-- `_JSON/` → Stores **parsed text in JSON format**.
-- `_MCQ/` → Stores **generated MCQs in JSON format**.
-- `_RESULTS/` → Stores **AI-generated answers and scores**.
+- `_PAPERS/`  → **original PDF papers**.
+- `_JSON/`    → **parsed text in JSON format**.
+- `_MCQ/`     → **generated MCQs in JSON format**.
+- `_RESULTS/` → **AI-generated answers and scores**.
 
 If you're just starting (and don't already have these or equivalent directories),
 , create these directories manually. If yours are named differently, substitute your
-directory names as you follow the instruction sequence below::
+directory names in `config.yml`
 ```bash
 mkdir _PAPERS _JSON _MCQ _RESULTS
 ```
 (**Note:** Some of the scripts below create their output directories automatically if they don’t
 already exist, but we will create them just to be sure..)
 
-At this stage you'll want to place some papers in PDF form into **_PAPERS**.
-
+Put your papers (in PDF form) in **_PAPERS**.
 
 #### Set Up and Activate Your Conda Environment
 If you already have a Conda environment you want to keep using, update it with 
@@ -90,10 +90,6 @@ conda activate globus_env
 (**Note:** If you get `CondaValueError: prefix already exists`, edit`environment.yml` and change the `name:`,
 then create and activate that env.)
 
-#### Drop into the src directory
-```bash
-cd src
-```
 
 ---
 
@@ -102,8 +98,11 @@ cd src
 ### 1. Convert PDFs to JSON
 Extract text from PDFs using a simple parser:
 ```bash
-python simple_parse.py -i ../_PAPERS -o ../_JSON
+python src/simple_parse.py 
 ```
+**Note:** You can specify input and output with, e.g., `-i _PAPERS -o _JSON`, otherwise the
+code will default to the directories specified in `config.yml`
+
 Alternatively, you can use **AdaParse** (higher-quality parser, still in testing). 
 [More details](https://github.com/7shoe/AdaParse/tree/main)
 
@@ -147,17 +146,20 @@ defaults to *openai:gpt-4o*.
 
 
    ```bash
-   python generate_mcqs.py -i ../_JSON \
-        -o _MCQ \
-        -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
+   python generate_mcqs.py -m 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
    ```
+**Note:** You can specify input and output with, e.g., `-i _JSON -o _MCQ`, and the
+model with -m as shown here; otherwise the
+code will default to the default model and directories specified in `config.yml`.
 
 ---
 
 ### 3. Combine multiple MCQ JSON files into a single file
    ```bash
-   python combine_json_files.py -i ../_MCQ -o ../MCQ-combined.json
+   python combine_json_files.py -o MCQ-combined.json
    ```
+Here you can override the settings in config.yml by specifying -i on the command line,
+but you must specify the filename for your combined file as shown here.
 
 ---
 
@@ -166,8 +168,9 @@ If you want to randomly select a subset of MCQs from the generated JSON files, u
 `select_mcqs_at_random.py`, specifying the number of MCQs to select.  For example, to select
 17 MCQs:
 ```bash
-python select_mcqs_at_random.py -i ../MCQ-combined.json -o ../MCQ-subset.json -n 17
+python select_mcqs_at_random.py -i MCQ-combined.json -o MCQ-subset.json -n 17
 ```
+Here you must specify the filenames for your combined and subset files as shown here.
 
 ---
 
@@ -178,12 +181,11 @@ use a differnet model than above here. Note the form for specifying the model is
 whose endpoint is running at <locn> = `alcf`..
 
 ```bash
-python generate_answers.py -i ../MCQ-subset.json \
-       -o _RESULTS \
+python generate_answers.py -i MCQ-subset.json \
        -m 'alcf:meta-llama/Meta-Llama-3-70B-Instruct'
 ```
-- **Input:** `MCQ-subset.json` (or `MCQ-combined.json` if no subset was chosen).
-- **Output:** `RESULTS/answers_<model>.json` (AI-generated answers).
+Shown here is `MCQ-subset.json` assuming you performed step 4; otherwise use `MCQ-combined.json` 
+(or whatever filename you used for output in step 3)
 
 ---
 
@@ -195,11 +197,13 @@ to evaluate the answers we created in the previous step with
 `alcf:meta-llama/Meta-Llama-3-70B-Instruct`
 
 ```bash
-python score_answers.py -o ../_RESULTS \
+python score_answers.py \
        -a 'alcf:meta-llama/Meta-Llama-3-70B-Instruct' \
        -b 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
 ```
-- **Input:** `_RESULTS/answers_<model-A>.json`
+As with previous steps, input and output directories default to the directories specified in config.yml but can
+be overriden with -i and/or -o on the command line. 
+- **Input:**  `_RESULTS/answers_<model-A>.json`
 - **Output:** `_RESULTS/scores_<locn-A>:<model-A>_<locn-B>:<model-B>.json`
 - **Note:** Any `/` in model names is replaced with `+` in filenames.
 
@@ -208,9 +212,11 @@ python score_answers.py -o ../_RESULTS \
 ### 7. Review MCQ Generation and Scoring Status
 To check progress and see which MCQs are answered/scored:
 ```bash
-python review_status.py -i ../MCQ-combined.json -o ../_RESULTS
+python review_status.py -i MCQ-combined.json 
 ```
 - This script identifies missing or incomplete processing steps.
+- As earlier, output defaults to the directory specified in config.yml 
+  (`_RESULTS`) but can be overriden on the coammand line with -o *directory-name*.
 
 ---
 
