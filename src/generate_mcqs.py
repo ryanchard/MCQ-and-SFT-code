@@ -174,7 +174,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
                 system_prompt=config.system_message_3
             )
             if step3_output is None:
-                raise ValueError("model.run() returned None for step3_output.")
+                raise ValueError("Chunk Fail: model.run() returned None for step3_output.")
 
 
             step3_output = step3_output.replace("```json", "").replace("```", "")
@@ -196,8 +196,7 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
             pbar.set_postfix_str(f"Score: {model_score}")
 
             if isinstance(model_score, int) and model_score > config.minScore:
-                #debugging
-                #config.logger.info(f"mcq generated, score {model_score} > {config.minScore}.")
+                config.logger.info(f"mcq generated, score {model_score} > {config.minScore}.")
                 chunks_successful +=1
 
                 qa_pairs.append({
@@ -212,13 +211,12 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
                 })
             else:
                 chunks_failed +=1
+                config.logger.info(f"Chunk fail: could not fix JSON.")
 
-            if not isinstance(model_score, int):
-                config.logger.info(f"Score {model_score} not an int")
 
 
         except json.JSONDecodeError:
-            #config.logger.info("JSON parsing failed. Trying to fix output...")
+            config.logger.info("Chunk JSON parsing failed. Trying to fix.")
             fix_prompt = f"""
             Convert the following text strictly into valid JSON with three key/value
             pairs: question, answer, score.  Nothing else, no additional text.
@@ -238,9 +236,9 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
                         parsed_json = json.loads(parsed_json)
                 except json.JSONDecodeError as e:
                     if "Expecting value: line 1 column 1" in str(e):
-                        config.logger.info("Output is not valid JSON (empty or invalid): ")
+                        config.logger.info(f"Chunk fail: Output empty or not valid JSON: {e}")
                     else:
-                        config.logger.info(f"JSON decoding error: {e}")
+                        config.logger.info(f"Chunk fail: JSON decoding error: {e}")
                     continue
 
                 model_answer = parsed_json.get("answer", "").strip()
@@ -253,14 +251,19 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
                         "answer": model_answer,
                         "text": augmented_chunk
                     })
+                    chunks_succeesful +=1
+                else:
+                    config.logger.info("Chunk fail: Could not fix JSON")
+                    chunks_failed +=1
+
             except Exception as e:
-                config.logger.info(f"Could not fix JSON automatically: {e}")
+                config.logger.info(f"Chunk fail: Could not fix JSON automatically: {e}")
                 pbar.update(1)
                 chunks_failed +=1
                 continue
 
         except Exception as e:
-            config.logger.info(f"Error in verifying question/answer: {e}")
+            config.logger.info(f"Chunk fail: Error in verifying question/answer: {e}")
             pbar.update(1)
             chunks_failed +=1
             continue
@@ -268,8 +271,6 @@ def generate_mcqs(model, path, filename, linenum, chunks: list, pbar) -> list:
         # Update the progress bar after processing this chunk
         pbar.update(1)
 
-    # Add a newline after processing all chunks in this call
-    config.logger.info("")
     return qa_pairs
 
 def process_directory(model, input_dir: str, output_dir: str = "output_files", use_progress_bar: bool = True):
@@ -306,7 +307,10 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files", u
 
     if len(json_files) > 0:
         approximate_chunk_count = approximate_total_chunks(input_dir, bytes_per_chunk=5000)
-        config.logger.info(f"\nTotal JSON files: {total_files}, ~{approximate_chunk_count} chunks\n")
+        config.logger.info(f"\nTotal JSON files: {total_files}, "
+                   f"~{int(0.8 * approximate_chunk_count)} - {approximate_chunk_count} chunks\n")
+
+
     else:
         # Fallback if only JSONL files exist (estimate by summing lines)
         approximate_chunk_count = sum(line_counts)
