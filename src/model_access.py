@@ -161,7 +161,8 @@ class Model:
     def wait_for_job_to_start(self):
         """Monitor job status and get assigned compute node"""
         while True:
-            qstat_output = subprocess.run(["qstat", "-f", self.job_id], capture_output=True, text=True).stdout
+            qstat_output = subprocess.run(["qstat", "-f", self.job_id],
+                                          capture_output=True, text=True).stdout
 
             # Extract compute node name
             match = re.search(r"exec_host = (\S+)", qstat_output)
