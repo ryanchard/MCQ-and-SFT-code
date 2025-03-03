@@ -117,12 +117,21 @@ def main():
         filenum          = qa_pair.get("filenum", "")
         chunknum         = qa_pair.get("chunknum", "")
 
+        #debug
+        print(".")
+
         if not question or not reference_answer:
+            #debug
+            print("not a question or ref_answer")
             continue  # skip malformed items
 
         # Use the model to generate an answer
         try:
+            #debug
+            print("_")
             model_answer = model.run(question)
+            #debug
+            print("_")
         except KeyboardInterrupt:
             print("EXIT: Execution interrupted by user")
             sys.exit(0)
