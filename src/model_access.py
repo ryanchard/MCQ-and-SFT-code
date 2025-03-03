@@ -206,7 +206,9 @@ class Model:
             self.client_socket.close()
             self.client_socket = None
 
-    def run(self, user_prompt='Tell me something interesting', system_prompt='You are a helpful assistant', temperature=0.7) -> str:
+    #def run(self, user_prompt='Tell me something interesting', system_prompt='You are a helpful assistant', temperature=0.7) -> str:
+    def run(self, user_prompt='Tell me something interesting', system_prompt='You are a helpful assistant', temperature=config.defaultTemperature) -> str:
+        
         """
         Calls model (configured with MODEL_NAME, ENDPOINT_MODEL, API_KEY_MODEL)
         to generate an answer to the given question.
