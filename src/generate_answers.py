@@ -10,6 +10,7 @@ import argparse
 
 import config
 from model_access import Model
+from tqdm import tqdm
 
 """
 import hydra
@@ -23,6 +24,24 @@ if __name__ == "__main__":
     main()
 """
 
+# other functions
+
+# add a "no op" progress bar for quiet mode
+class NoOpTqdm:
+    """A do-nothing progress bar class that safely ignores all tqdm calls."""
+    def __init__(self, total=0, desc="", unit=""):
+        self.total = total  # Store total count
+        self.n = 0  # Keep track of progress count
+
+    def update(self, n=1):
+        self.n += n  # Simulate tqdm's progress tracking
+
+    def set_postfix_str(self, s):
+        pass  # No-op
+
+    def close(self):
+        pass  # No-op
+
 # ---------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(description='Program to use LLM to provide answers to MCQs')
@@ -31,11 +50,26 @@ def main():
     parser.add_argument('-e','--end', help='End number in MCQs file', default='all')
     parser.add_argument('-c', "--cache-dir", type=str, default=os.getenv("HF_HOME"),
                         help="Custom cache directory for Hugging Face")
-    parser.add_argument('-i', '--input',  help='Directory containing input JSON/JSONL files',
-                        default=config.json_dir)  
+    parser.add_argument('-i', '--input',  help='file containing MCQs', required=True)  
     parser.add_argument('-o', '--output', help='Output directory for Results',
-                        default=config.mcq_dir)
+                        default=config.results_dir)
+    parser.add_argument('-q','--quiet',   action='store_true',   
+                        help='No progress bar or messages')
+    parser.add_argument('-v','--verbose', action='store_true',    
+                        help='Enable verbose logging')    
+
     args = parser.parse_args()
+
+    # Decide logging level and whether to show a progress bar
+    if args.verbose:
+        config.logger.setLevel(logging.INFO)
+        use_progress_bar = False
+    elif args.quiet:
+        config.logger.setLevel(logging.CRITICAL)
+        use_progress_bar = False
+    else:  # default case
+        config.logger.setLevel(logging.WARNING)
+        use_progress_bar = True
 
     # Set HF_HOME if using custom cache directory
     if args.cache_dir:
@@ -51,8 +85,12 @@ def main():
     model.details()
 
     # Load question-answer pairs
-    with open(json_file, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    try:
+        with open(json_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except:
+        print(f"ERROR: file {json_file} not found.")
+        sys.exit(0)
 
     qa_pairs = []
 
@@ -76,7 +114,14 @@ def main():
             continue  # skip malformed items
 
         # Use the model to generate an answer
-        model_answer = model.run(question)
+        try:
+            model_answer = model.run(question)
+        except KeyboardInterrupt:
+            print("EXIT: Execution interrupted by user")
+            sys.exit(0)
+        except Exception as e:
+            print(f"ERROR: {e}")
+            sys.exit(0)
 
         gen_time    = time.time() - start_time
         total_time += gen_time
@@ -103,3 +148,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
