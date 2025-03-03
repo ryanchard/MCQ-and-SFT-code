@@ -7,6 +7,7 @@ import statistics
 import requests
 import time
 import argparse
+import logging
 
 import config
 from model_access import Model
@@ -26,6 +27,7 @@ if __name__ == "__main__":
 
 # other functions
 
+
 # add a "no op" progress bar for quiet mode
 class NoOpTqdm:
     """A do-nothing progress bar class that safely ignores all tqdm calls."""
@@ -43,6 +45,7 @@ class NoOpTqdm:
         pass  # No-op
 
 # ---------------------------------------------------------------------
+
 def main():
     parser = argparse.ArgumentParser(description='Program to use LLM to provide answers to MCQs')
     parser.add_argument('-m','--model', help='model', required=True)
@@ -61,15 +64,19 @@ def main():
     args = parser.parse_args()
 
     # Decide logging level and whether to show a progress bar
+
     if args.verbose:
         config.logger.setLevel(logging.INFO)
         use_progress_bar = False
+        config.logger.info("verbose mode")
     elif args.quiet:
         config.logger.setLevel(logging.CRITICAL)
         use_progress_bar = False
+        config.logger.info("quiet mode")
     else:  # default case
         config.logger.setLevel(logging.WARNING)
         use_progress_bar = True
+        config.logger.info("progress bar only mode")
 
     # Set HF_HOME if using custom cache directory
     if args.cache_dir:

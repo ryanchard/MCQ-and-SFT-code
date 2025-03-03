@@ -21,13 +21,14 @@ from exceptions import APITimeoutError
 
 logger = logging.getLogger(__name__)
 
-# centralize to a single authoritative alcf_chat_models list
-from inference_auth_token import get_access_token
-from alcf_inference_utilities import get_names_of_alcf_chat_models
 
-# Initialize the shared globals for ALCF models.
-ALCF_ACCESS_TOKEN = get_access_token()
-ALCF_CHAT_MODELS = get_names_of_alcf_chat_models(ALCF_ACCESS_TOKEN)
+def check_alcf():
+    # centralize to a single authoritative alcf_chat_models list
+    from inference_auth_token import get_access_token
+    from alcf_inference_utilities import get_names_of_alcf_chat_models
+    # Initialize the shared globals for ALCF models.
+    ALCF_ACCESS_TOKEN = get_access_token()
+    ALCF_CHAT_MODELS = get_names_of_alcf_chat_models(ALCF_ACCESS_TOKEN)
 
 OPENAI_EP  = 'https://api.openai.com/v1'
 
@@ -121,6 +122,7 @@ class Model:
             self.tokenizer.padding_side = "right"  # Recommended for LLaMA
     
         elif model_name.startswith('alcf'):
+            check_alcf()
             self.model_name = model_name.split('alcf:')[1]
             config.logger.info('ALCF Inference Service Model: %s', self.model_name)
 
