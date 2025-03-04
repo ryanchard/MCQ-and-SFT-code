@@ -53,6 +53,7 @@ defaultTokenizer =   model_config.get("Tokenizer", "None")
 
 # Quality (MCQ) settings
 minScore           = quality.get("minScore", 7)
+chunkSize          = quality.get("chunkSize", 1024)
 
 # Directories for user data
 directories = _config.get("directories", {})

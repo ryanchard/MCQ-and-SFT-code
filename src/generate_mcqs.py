@@ -15,15 +15,15 @@ from tqdm import tqdm  # CeC: tqdm for progress bar
 
 from model_access import Model
 from inference_auth_token import get_access_token
-alcf_access_token = get_access_token()
+#alcf_access_token = get_access_token()
 
 from alcf_inference_utilities import get_names_of_alcf_chat_models
-alcf_chat_models = get_names_of_alcf_chat_models(alcf_access_token)
+#alcf_chat_models = get_names_of_alcf_chat_models(alcf_access_token)
 
 ##############################################################################
 # Global constants
 ##############################################################################
-CHUNK_SIZE = 1000  # approximate number of words per chunk
+CHUNK_SIZE = config.chunkSize
 chunks_successful = 0
 chunks_failed     = 0
 
@@ -65,7 +65,7 @@ def human_readable_time(seconds: float) -> str:
         days = seconds / 86400
         return f"{days:.2f} days"
 
-def approximate_total_chunks(input_dir, bytes_per_chunk=5000):
+def approximate_total_chunks(input_dir, bytes_per_chunk=CHUNK_SIZE):
     """
     Returns an approximate total chunk count by summing file sizes
     of .json or .jsonl files and dividing by `bytes_per_chunk`.
@@ -306,9 +306,9 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files", u
         config.logger.info(f'{len(jsonl_files)} JSONL files, with {sum(line_counts)} lines in total: {line_counts}')
 
     if len(json_files) > 0:
-        approximate_chunk_count = approximate_total_chunks(input_dir, bytes_per_chunk=5000)
+        approximate_chunk_count = approximate_total_chunks(input_dir, bytes_per_chunk=CHUNK_SIZE)
         config.logger.info(f"\nTotal JSON files: {total_files}, "
-                   f"~{int(0.8 * approximate_chunk_count)} - {approximate_chunk_count} chunks\n")
+                   f"~{int(0.8 * approximate_chunk_count)}-{approximate_chunk_count} chunks\n")
 
 
     else:
@@ -408,7 +408,8 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files", u
     pbar.close()
 
 
-def get_model_parameters(model):
+# debug
+def deprecated_I_THINK_get_model_parameters(model):
     if model in alcf_chat_models:
         key      = alcf_access_token
         endpoint = 'https://data-portal-dev.cels.anl.gov/resource_server/sophia/vllm/v1'

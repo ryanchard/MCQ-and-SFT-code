@@ -30,6 +30,7 @@ model:
 
 quality:
   minScore:    7
+  chunkSize:   1000
 
 # Prompts for generate_mcqs.py
 # 

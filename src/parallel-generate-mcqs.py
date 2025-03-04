@@ -471,7 +471,7 @@ if __name__ == "__main__":
                         default=config.mcq_dir)
     parser.add_argument('-m','--model', help='Model to use to generate MCQs',
                         default=config.defaultModel)
-    parser.add_argument('-p','--parallel', type=int, default=4, 
+    parser.add_argument('-p','--parallel', type=int, default=2, 
                         help='Number of files to process in parallel')
     parser.add_argument('-q','--quiet',   action='store_true',   
                         help='No progress bar or messages')       

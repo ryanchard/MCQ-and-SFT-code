@@ -22,13 +22,15 @@ from exceptions import APITimeoutError
 logger = logging.getLogger(__name__)
 
 
-def check_alcf():
-    # centralize to a single authoritative alcf_chat_models list
-    from inference_auth_token import get_access_token
-    from alcf_inference_utilities import get_names_of_alcf_chat_models
+#def check_alcf():
+    #print("check alcf--- import get_access_token") #debug
+#
+    ## centralize to a single authoritative alcf_chat_models list
+    #from inference_auth_token import get_access_token
+    #from alcf_inference_utilities import get_names_of_alcf_chat_models
     # Initialize the shared globals for ALCF models.
-    ALCF_ACCESS_TOKEN = get_access_token()
-    ALCF_CHAT_MODELS = get_names_of_alcf_chat_models(ALCF_ACCESS_TOKEN)
+    #ALCF_ACCESS_TOKEN = get_access_token()
+    #ALCF_CHAT_MODELS = get_names_of_alcf_chat_models(ALCF_ACCESS_TOKEN)
 
 OPENAI_EP  = 'https://api.openai.com/v1'
 
@@ -41,14 +43,17 @@ class Model:
         self.headers = { 'Content-Type': 'application/json' }
         self.endpoint = None
 
-        # Model to be run locally via VLLM
+        # Actions for different model runtimes
+
+        # LOCAL
         if model_name.startswith('local:'):
             self.model_name = model_name.split('local:')[1]
-            config.logger.info('\nLocal model:', model_name)
+            config.logger.info(f"Local model: {model_name}.")
             self.key        = None
             self.endpoint   = 'http://localhost:8000/v1/chat/completions'
             self.model_type = 'vLLM'
     
+        # Submit to PBS
         elif model_name.startswith('pb:'):
             """Submit the model job to PBS and store the job ID"""
             self.model_name = model_name.split('pb:')[1]
@@ -75,11 +80,11 @@ class Model:
             # Receive response
             response = self.client_socket.recv(1024).decode()
             if response != 'ok':
-                config.logger.warning('Unexpected response:', response)
+                config.logger.warning(f"Unexpected response: {response}")
                 exit(1)
-            config.logger.info(f"Model server initialized")
+            config.logger.info("Model server initialized")
 
-        # Model to be downloaded from HF and run via PBS job
+        # Submit to PBS
         elif model_name.startswith('hf:'):
             self.model_type = 'Huggingface'
 
@@ -92,7 +97,7 @@ class Model:
             cache_dir = os.getenv("HF_HOME")
 
             self.model_name = model_name.split('hf:')[1]
-            config.logger.info('\nHF model running locally:', model_name)
+            config.logger.info(f"HF model running locally: {model_name}")
             self.endpoint = 'http://huggingface.co'
 
             with open("hf_access_token.txt", "r") as file:
@@ -121,33 +126,37 @@ class Model:
             # Ensure tokenizer uses correct padding side
             self.tokenizer.padding_side = "right"  # Recommended for LLaMA
     
+        # Model to be run via ALCF endpoint
         elif model_name.startswith('alcf'):
-            check_alcf()
+            #debug
+            print("ALCF model")
+            #check_alcf()
             self.model_name = model_name.split('alcf:')[1]
-            config.logger.info('ALCF Inference Service Model: %s', self.model_name)
+            config.logger.info(f"ALCF Inference Service Model: {self.model_name}")
 
-            #from inference_auth_token import get_access_token
-            #self.key = get_access_token()
-#
-            #from alcf_inference_utilities import get_names_of_alcf_chat_models
-            #alcf_chat_models = get_names_of_alcf_chat_models(self.key)
-            #if self.model_name not in alcf_chat_models:
-                #config.logger.warning('Bad ALCF model', self.model_name)
-                #exit(1)
-            #self.model_type = 'ALCF'
-#
-            #self.endpoint = 'https://data-portal-dev.cels.anl.gov/resource_server/sophia/vllm/v1'
+            from inference_auth_token import get_access_token
+            self.key = get_access_token()
+
+            from alcf_inference_utilities import get_names_of_alcf_chat_models
+            alcf_chat_models = get_names_of_alcf_chat_models(self.key)
+            if self.model_name not in alcf_chat_models:
+                config.logger.warning(f"Bad ALCF model: {self.model_name}")
+                exit(1)
+            self.model_type = 'ALCF'
+
+            self.endpoint = 'https://data-portal-dev.cels.anl.gov/resource_server/sophia/vllm/v1'
             self.key = ALCF_ACCESS_TOKEN
 
             if self.model_name not in ALCF_CHAT_MODELS:
-                config.logger.warning('Bad ALCF model', self.model_name)
+                config.logger.warning(f"Bad ALCF model: {self.model_name}")
                 exit(1)
             self.model_type = 'ALCF'
             self.endpoint = 'https://data-portal-dev.cels.anl.gov/resource_server/sophia/vllm/v1'
-    
+
+        # Model to be run at OpenAI 
         elif model_name.startswith('openai'):
             self.model_name = model_name.split('openai:')[1]
-            config.logger.info('OpenAI model to be run at OpenAI:', self.model_name)
+            config.logger.info(f"OpenAI model to be run at OpenAI: {self.model_name}")
             self.model_type = 'OpenAI'
             #if self.model_name not in ['gpt-4o']:
             #    config.logger.warning('Bad OpenAI model', self.model_name)
@@ -156,8 +165,9 @@ class Model:
                 self.key = file.read().strip()
             self.endpoint = OPENAI_EP
     
+        # ¯\_(ツ)_/¯
         else:
-            config.logger.warning('Bad model:', model_name)
+            config.logger.warning(f"Bad model: {model_name}")
             exit(1)
     
     def wait_for_job_to_start(self):
@@ -209,21 +219,19 @@ class Model:
             self.client_socket.close()
             self.client_socket = None
 
-    #def run(self, user_prompt='Tell me something interesting', system_prompt='You are a helpful assistant', temperature=0.7) -> str:
-    def run(self, user_prompt='Tell me something interesting', system_prompt='You are a helpful assistant', temperature=config.defaultTemperature) -> str:
+    def run(self, user_prompt='Tell me something interesting',
+            system_prompt='You are a helpful assistant',
+            temperature=config.defaultTemperature) -> str:
         
         """
         Calls model (configured with MODEL_NAME, ENDPOINT_MODEL, API_KEY_MODEL)
         to generate an answer to the given question.
         """
         
-        #config.logger.info("Model details:")
-        #self.details()
-    
         if self.model_type == 'Huggingface':
-            config.logger.info('Calling HF model', hf_info)
+            config.logger.info(f"Calling HF model {hf_info}")
             response = run_hf_model(user_prompt, self.base_model, self.tokenizer)
-            config.logger.info('HF response =', response)
+            config.logger.info(f"HF response: {response}")
             return response
 
         elif self.model_type == 'HuggingfacePBS':
@@ -242,7 +250,6 @@ class Model:
             return response
     
         elif self.model_type == 'vLLM':
-            config.logger.info('HERE')
             data = {
                 "model": self.model_name,
                 "messages": [
@@ -254,11 +261,11 @@ class Model:
             try:
                 config.logger.info(f'Running {self.endpoint}\n\tHeaders = {self.headers}\n\tData = {json.dumps(data)}')
                 response = requests.post(self.endpoint, headers=self.headers, data=json.dumps(data))
-                config.logger.info('Response:', response)
+                config.logger.info("Response: {response}")
                 response = response.json()
-                config.logger.info('JSON:', response)
+                config.logger.info(f"JSON: {response}")
                 message = response['choices'][0]['message']['content']
-                config.logger.info('MESSAGE:', message)
+                config.logger.info(f"MESSAGE: {message}")
                 #exit(1)
             except Exception as e:
                 config.logger.warning(f'Exception: {e}')
@@ -309,7 +316,7 @@ class Model:
             return generated_text
 
         else:
-            config.logger.warning('Unknown model type:', self.model_type)
+            config.logger.warning(f"Unknown model type: {self.model_type}")
             exit(1)
     
 
