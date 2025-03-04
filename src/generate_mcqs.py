@@ -18,6 +18,7 @@ from model_access import Model
 
 #from alcf_inference_utilities import get_names_of_alcf_chat_models
 
+
 ##############################################################################
 # Global constants
 ##############################################################################
@@ -25,6 +26,7 @@ CHUNK_SIZE = config.chunkSize
 chunks_successful = 0
 chunks_failed     = 0
 
+nlp = spacy.load("en_core_web_sm") 
 
 # add a "no op" progress bar for quiet mode
 class NoOpTqdm:
@@ -81,7 +83,6 @@ def split_text_into_chunks(text: str, chunk_size: int = CHUNK_SIZE) -> list:
     Split the text into chunks of ~chunk_size words, respecting sentence
     boundaries using spaCy for sentence segmentation.
     """
-    nlp = spacy.load("en_core_web_sm") # FIX_LATER: should be outside the fctn or we repeatedly load it
     doc = nlp(text)
     sentences = [sent.text.strip() for sent in doc.sents]
 
