@@ -14,11 +14,9 @@ import argparse
 from tqdm import tqdm  # CeC: tqdm for progress bar
 
 from model_access import Model
-from inference_auth_token import get_access_token
-#alcf_access_token = get_access_token()
+#from inference_auth_token import get_access_token
 
-from alcf_inference_utilities import get_names_of_alcf_chat_models
-#alcf_chat_models = get_names_of_alcf_chat_models(alcf_access_token)
+#from alcf_inference_utilities import get_names_of_alcf_chat_models
 
 ##############################################################################
 # Global constants
@@ -407,20 +405,6 @@ def process_directory(model, input_dir: str, output_dir: str = "output_files", u
     # Close the progress bar
     pbar.close()
 
-
-# debug
-def deprecated_I_THINK_get_model_parameters(model):
-    if model in alcf_chat_models:
-        key      = alcf_access_token
-        endpoint = 'https://data-portal-dev.cels.anl.gov/resource_server/sophia/vllm/v1'
-    elif model == 'gpt-4o':
-        key      = openai_access_token
-        endpoint = OPENAI_EP
-    else:
-        config.logger.warning('Bad model:', model)
-        config.logger.warning('Valid models are:', alcf_chat_models + 'gpt-4o')
-        exit(1)
-    return (model, key, endpoint)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Program to generate MCQs from JSONL or JSON files')
