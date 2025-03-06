@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.6 - 06Mar (CeC)
+- moved additional values (e.g., Temperature) out of code and into config.yml
+- Implemented improvements from generate_mcqs into generate_answers, including
+  -v and -q as well as default (!v and !q) progress bar.
+- Changed generate_answers to write output after each loop rather than saving all
+  results and writing the file at the end.
+- undid an earlier change that tried to authenticate with ALCF endpoints even if
+  you were not using an ALCF-hosted model.
 ## v0.5 - 24Feb (CeC)
 - changed strategy on logging in generate_mcqs.py.  Default is now progress bar
   (no logger.info chatter). -q or --quiet is now totally silent unless critical 

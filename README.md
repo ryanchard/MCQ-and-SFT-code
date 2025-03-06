@@ -152,6 +152,9 @@ defaults to *openai:gpt-4o*.
 model with -m as shown here; otherwise the
 code will default to the default model and directories specified in `config.yml`.
 
+The code by default displays a progress bar. In -v / --verbose mode informational 
+messages are displayed and in -q / --quiet mode no output is displayed.
+
 ---
 
 ### 3. Combine multiple MCQ JSON files into a single file
@@ -186,6 +189,9 @@ python src/generate_answers.py -i MCQ-subset.json \
 ```
 Shown here is `MCQ-subset.json` assuming you performed step 4; otherwise use `MCQ-combined.json` 
 (or whatever filename you used for output in step 3)
+
+The code by default displays a progress bar. In -v / --verbose mode informational 
+messages are displayed and in -q / --quiet mode no output is displayed.
 
 ---
 
