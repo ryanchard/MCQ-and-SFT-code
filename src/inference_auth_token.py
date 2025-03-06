@@ -39,9 +39,6 @@ def get_auth_object(force=False):
     has already happened, existing tokens will be reused.
     """
 
-    #debug
-    print("get_auth_object")
-
     # Create Globus user application
     app = globus_sdk.UserApp(
         APP_NAME,
@@ -73,8 +70,6 @@ def get_access_token():
     6 months of inactivity, an authentication will be triggered.
     """
 
-    #debug
-    print("get_access_token")
 
     # Get authorizer object and authenticate if need be
     auth = get_auth_object()
