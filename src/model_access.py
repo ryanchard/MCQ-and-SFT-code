@@ -128,8 +128,6 @@ class Model:
     
         # Model to be run via ALCF endpoint
         elif model_name.startswith('alcf'):
-            #debug
-            print("ALCF model")
             #check_alcf()
             self.model_name = model_name.split('alcf:')[1]
             config.logger.info(f"ALCF Inference Service Model: {self.model_name}")
@@ -145,6 +143,12 @@ class Model:
             self.model_type = 'ALCF'
 
             self.endpoint = 'https://data-portal-dev.cels.anl.gov/resource_server/sophia/vllm/v1'
+
+            from inference_auth_token import get_access_token
+            from alcf_inference_utilities import get_names_of_alcf_chat_models
+            # Initialize the shared globals for ALCF models.
+            ALCF_ACCESS_TOKEN = get_access_token()
+            ALCF_CHAT_MODELS = get_names_of_alcf_chat_models(ALCF_ACCESS_TOKEN)
             self.key = ALCF_ACCESS_TOKEN
 
             if self.model_name not in ALCF_CHAT_MODELS:
