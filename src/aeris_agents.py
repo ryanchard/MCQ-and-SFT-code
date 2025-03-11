@@ -20,7 +20,7 @@ from aeris.manager import Manager
 import config
 
 from simple_parse import extract_text_from_pdf
-from generate_mcqs import split_text_into_chunks, generate_mcqs
+from generate_mcqs import split_text_into_chunks, generate_mcqs, NoOpTqdm
 # from select_mcqs_at_random import select_random_entries
 from model_access import Model
 
@@ -68,6 +68,7 @@ class MCQGenerator(Behavior):
     @action
     def generate_mcqs(self, file_path) -> str:
         CHUNK_SIZE = 1000
+        num_chunks = 0
         with open(file_path, 'r', encoding='utf-8') as file:
             if file_path.lower().endswith(".json"):
                 json_str = file.read()
@@ -87,12 +88,12 @@ class MCQGenerator(Behavior):
                 chunks = split_text_into_chunks(text, CHUNK_SIZE)
                 num_chunks += len(chunks)
 
-                # prompt_answer_pairs = generate_mcqs(self.model, path, file_path, j, chunks)
-                prompt_answer_pairs = {'hello': 'test'}
+                prompt_answer_pairs = generate_mcqs(self.model, path, file_path, j, chunks, NoOpTqdm())
+                #prompt_answer_pairs = {'hello': 'test'}
                 self.all_prompt_answer_pairs.extend(prompt_answer_pairs)
 
-        out_file = f'mcqs_{file_path}.json'
-        logger.info(f"Writing output for file {i} with {num_chunks} chunks to {out_file}")
+        out_file = f'mcqs_{file_path}'
+        logger.info(f"Writing output to {out_file}")
         with open(out_file, 'w', encoding='utf-8') as out_f:
             json.dump(self.all_prompt_answer_pairs, out_f, ensure_ascii=False, indent=2)
         return out_file
@@ -156,11 +157,11 @@ def main() -> int:
 
         logger.info('Parser Agent parsed json: %s', future.result())
 
-        # future: Future[int] = parser_agent.action('generate_mcqs', parsed_output)
+        future: Future[int] = mcq_gen_agent.action('generate_mcqs', parsed_output)
         
-        # mcq_output = future.result()
+        mcq_output = future.result()
 
-        # logger.info('MCQ Agent generated MCQs: %s', future.result())
+        logger.info('MCQ Agent generated MCQs: %s', future.result())
 
     return 0
 
