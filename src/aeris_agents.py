@@ -99,22 +99,8 @@ class MCQGenerator(Behavior):
         return out_file
 
 
-class MCQAnswerer(Behavior):
-    model: Model
 
-    def __init__(self, model_name: str) -> None:
-        self.model_name = model_name
-
-    def on_setup(self) -> None:
-        self.model = Model(self.model_name)
-
-    @action
-    def answer_mcqs(self, file_path) -> str:
-        return "dog"
-
-
-
-class SelectMCQs(Behavior):
+class MCQSelector(Behavior):
     
     @action
     def select_mcqs(self, input_file, output_file, n=5) -> str:
@@ -136,6 +122,47 @@ class SelectMCQs(Behavior):
         logger.info(f"Selected {n} random entries written to {output_file}")
 
         return output_file
+    
+
+
+class MCQAnswerer(Behavior):
+    model: Model
+
+    def __init__(self, model_name: str) -> None:
+        self.model_name = model_name
+
+    def on_setup(self) -> None:
+        self.model = Model(self.model_name)
+
+    @action
+    def answer_mcqs(self, file_path) -> str:
+        return "dog"
+
+
+
+
+class AnswerGenerator(Behavior):
+    
+    model: Model
+
+    def __init__(self, model_name: str) -> None:
+        self.model_name = model_name
+
+    def on_setup(self) -> None:
+        self.model = Model(self.model_name)
+
+    @action
+    def generate_answers(self, input_file, output_file, n=5) -> str:
+
+        return 1
+    
+
+class AnswerScorer(Behavior):
+    
+    @action
+    def score_answers(self, input_file, output_file, n=5) -> str:
+
+        return 1
 
 def main() -> int:
     init_logging(logging.INFO)
@@ -146,7 +173,9 @@ def main() -> int:
     ) as manager:
         pdf_parser = PDFParser()
         mcq_generator = MCQGenerator(model_name="alcf:mistralai/Mistral-7B-Instruct-v0.3")
-        mcq_selector = SelectMCQs()
+        mcq_selector = MCQSelector()
+        generate_answers = AnswerGenerator(model_name="alcf:meta-llama/Meta-Llama-3-70B-Instruct")
+        score_answers = AnswerScorer()
 
         parser_agent = manager.launch(pdf_parser)
         mcq_gen_agent = manager.launch(mcq_generator)
