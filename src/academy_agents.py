@@ -44,17 +44,16 @@ class PDFParser(Behavior):
 
         basename, _ = os.path.splitext(file_path)
         out_file = basename + ".json"
-        out_path  = os.path.join("", out_file)
+        out_path = os.path.join("", out_file)
         if os.path.isfile(out_path):
-            logger.warning(f'Already exists: {out_path}')
+            logger.warning(f"Already exists: {out_path}")
             return 0
 
         logger.info(f"Processing file: {file_path}")
 
         (text, parser) = extract_text_from_pdf(file_path)
 
-        json_structure = [{'path': file_path, 'text': text, 'parser':parser}]
-
+        json_structure = [{"path": file_path, "text": text, "parser": parser}]
 
         logger.info(f"TIMEINFO: {self.agent_name} agent end - task_id {task_id}")
 
@@ -76,31 +75,36 @@ class MCQGenerator(Behavior):
     @action
     def generate_mcqs(self, parsed_input, file_path) -> str:
         task_id = str(uuid.uuid4())[:8]
-        logger.info(f"TIMEINFO: {self.agent_name}-{self.model_name} agent start - task_id {task_id}")
+        logger.info(
+            f"TIMEINFO: {self.agent_name}-{self.model_name} agent start - task_id {task_id}"
+        )
 
         CHUNK_SIZE = 1000
         num_chunks = 0
         count = 0
-        
+
         for record in parsed_input:
             count += 1
-        
-            text = record['text']
-            path = record['path']
+
+            text = record["text"]
+            path = record["path"]
             chunks = split_text_into_chunks(text, CHUNK_SIZE)
             num_chunks += len(chunks)
 
-            prompt_answer_pairs = generate_mcqs(self.model, path, file_path, count, chunks, NoOpTqdm())
-            #prompt_answer_pairs = {'hello': 'test'}
+            prompt_answer_pairs = generate_mcqs(
+                self.model, path, file_path, count, chunks, NoOpTqdm()
+            )
+            # prompt_answer_pairs = {'hello': 'test'}
             self.all_prompt_answer_pairs.extend(prompt_answer_pairs)
 
-        logger.info(f"TIMEINFO: {self.agent_name}-{self.model_name} agent end - task_id {task_id}")
+        logger.info(
+            f"TIMEINFO: {self.agent_name}-{self.model_name} agent end - task_id {task_id}"
+        )
 
         return self.all_prompt_answer_pairs
 
 
 class MCQSelector(Behavior):
-    
     def __init__(self):
         self.agent_name = "MCQSelector-" + str(uuid.uuid4())[:8]
 
@@ -110,14 +114,15 @@ class MCQSelector(Behavior):
         logger.info(f"TIMEINFO: {self.agent_name} agent start - task_id {task_id}")
 
         if n > len(data):
-            raise ValueError(f"Requested {n} entries, but the file only contains {len(data)} entries.")
+            raise ValueError(
+                f"Requested {n} entries, but the file only contains {len(data)} entries."
+            )
 
         # Randomly sample N entries without replacement
         selected_entries = random.sample(data, n)
 
         logger.info(f"TIMEINFO: {self.agent_name} agent end - task_id {task_id}")
         return selected_entries
-    
 
 
 class MCQAnswerer(Behavior):
@@ -134,7 +139,9 @@ class MCQAnswerer(Behavior):
     def answer_mcqs(self, data, start_num=0) -> str:
         task_id = str(uuid.uuid4())[:8]
 
-        logger.info(f"TIMEINFO: {self.agent_name}-{self.model_name} agent start - task_id {task_id}")
+        logger.info(
+            f"TIMEINFO: {self.agent_name}-{self.model_name} agent start - task_id {task_id}"
+        )
 
         qa_pairs = []
 
@@ -143,16 +150,18 @@ class MCQAnswerer(Behavior):
 
         data = data[start_num:]
 
-        config.logger.info(f'Generating {len(data)} answers with model {self.model_name}')
+        config.logger.info(
+            f"Generating {len(data)} answers with model {self.model_name}"
+        )
 
         pbar = NoOpTqdm(total=len(data))
 
         for (qa_pair, index) in zip(data, range(1, len(data) + 1)):
             question = qa_pair.get("question", "")
             reference_answer = qa_pair.get("answer", "")
-            filename         = qa_pair.get("file", "")
-            filenum          = qa_pair.get("filenum", "")
-            chunknum         = qa_pair.get("chunknum", "")
+            filename = qa_pair.get("file", "")
+            filenum = qa_pair.get("filenum", "")
+            chunknum = qa_pair.get("chunknum", "")
 
             if not question or not reference_answer:
                 config.logger.info("not a question or ref_answer")
@@ -168,19 +177,26 @@ class MCQAnswerer(Behavior):
                 config.logger.error(f"ERROR: {e}")
                 sys.exit(0)
 
-            gen_time    = time.time() - start_time
+            gen_time = time.time() - start_time
             total_time += gen_time
-            start_time  = time.time()
-            if index%10==0:
+            start_time = time.time()
+            if index % 10 == 0:
                 avg_time = total_time / index  # Average time per item so far
 
-            new_tuple = {'file':filename, 'filenum':filenum, 'chunknum':chunknum,
-                        'gen_time': f'{gen_time:.3f}',
-                        'question':question, 'reference': reference_answer,
-                        'model': model_answer}
+            new_tuple = {
+                "file": filename,
+                "filenum": filenum,
+                "chunknum": chunknum,
+                "gen_time": f"{gen_time:.3f}",
+                "question": question,
+                "reference": reference_answer,
+                "model": model_answer,
+            }
             qa_pairs.append(new_tuple)
 
-        logger.info(f"TIMEINFO: {self.agent_name}-{self.model_name} agent end - task_id {task_id}")
+        logger.info(
+            f"TIMEINFO: {self.agent_name}-{self.model_name} agent end - task_id {task_id}"
+        )
 
         return qa_pairs
 
@@ -201,48 +217,69 @@ class AnswerScorer(Behavior):
     @action
     def score_answers(self, data) -> str:
         task_id = str(uuid.uuid4())[:8]
-        logger.info(f"TIMEINFO: {self.agent_name}-{self.model_a_name}-{self.model_b_name} agent start - task_id {task_id}")
+        logger.info(
+            f"TIMEINFO: {self.agent_name}-{self.model_a_name}-{self.model_b_name} agent start - task_id {task_id}"
+        )
 
-        scores   = []
+        scores = []
         qa_pairs = []
 
         start_time = time.time()
         total_time = 0
         eval_answer_total_time = 0
 
-        logger.info(f'Processing {len(data)} Q pairs')
+        logger.info(f"Processing {len(data)} Q pairs")
         for (qa_pair, index) in zip(data, range(1, len(data) + 1)):
-            question         = qa_pair.get("question", "")
+            question = qa_pair.get("question", "")
             reference_answer = qa_pair.get("reference", "")
-            model_answer     = qa_pair.get("model", "")
-            gen_time         = qa_pair.get("gen_time", "")
-            file             = qa_pair.get("file", "")
-            filenum          = qa_pair.get("filenum", "")
-            chunknum         = qa_pair.get("chunknum", "")
+            model_answer = qa_pair.get("model", "")
+            gen_time = qa_pair.get("gen_time", "")
+            file = qa_pair.get("file", "")
+            filenum = qa_pair.get("filenum", "")
+            chunknum = qa_pair.get("chunknum", "")
 
             if not question or not reference_answer or not model_answer:
-                print('Bad item:')
-                print('Question ', question)
-                print('Reference', reference_answer)
-                print('Model    ', model_answer)
+                print("Bad item:")
+                print("Question ", question)
+                print("Reference", reference_answer)
+                print("Model    ", model_answer)
                 continue  # skip malformed items
 
             # Use model to evaluate/grade the generated answer in file
             # against the reference answer
             eval_answer_start_time = time.time()
-            score = score_answer(index, self.modelb, question, reference_answer, model_answer)
+            score = score_answer(
+                index, self.modelb, question, reference_answer, model_answer
+            )
             eval_answer_time = time.time() - eval_answer_start_time
             eval_answer_total_time += eval_answer_time
             if score != None:
                 scores.append(score)
-                qa_pairs.append({'modelA': self.model_a_name, 'modelB': self.model_b_name, 'index': index, 'question': question, 'reference':reference_answer, 'model':model_answer, 'score':score, 'gen_time': gen_time, 'eval_time': f'{eval_answer_time:.4f}', 'file':file, 'filenum':filenum, 'chunknum':chunknum})
+                qa_pairs.append(
+                    {
+                        "modelA": self.model_a_name,
+                        "modelB": self.model_b_name,
+                        "index": index,
+                        "question": question,
+                        "reference": reference_answer,
+                        "model": model_answer,
+                        "score": score,
+                        "gen_time": gen_time,
+                        "eval_time": f"{eval_answer_time:.4f}",
+                        "file": file,
+                        "filenum": filenum,
+                        "chunknum": chunknum,
+                    }
+                )
 
             total_time += time.time() - start_time
             start_time = time.time()
-            if index%10==0:
+            if index % 10 == 0:
                 avg_time = total_time / index  # Average time per item so far
-                avg_eval_time = eval_answer_total_time / index  # Average time per item so far
-                print(f'{index} ({avg_time:.2f})', end =' ', flush=True) 
+                avg_eval_time = (
+                    eval_answer_total_time / index
+                )  # Average time per item so far
+                print(f"{index} ({avg_time:.2f})", end=" ", flush=True)
 
         if scores:
             mean_score = statistics.mean(scores)
@@ -250,14 +287,14 @@ class AnswerScorer(Behavior):
         else:
             print("No valid QA pairs found or no scores computed.")
 
-        logger.info(f"TIMEINFO: {self.agent_name}-{self.model_a_name}-{self.model_b_name} agent end - task_id {task_id}")
+        logger.info(
+            f"TIMEINFO: {self.agent_name}-{self.model_a_name}-{self.model_b_name} agent end - task_id {task_id}"
+        )
 
         return scores, qa_pairs
 
 
 class Coordinator(Behavior):
-
-
     def __init__(
         self,
         generator_a: Handle[MCQGenerator],
@@ -288,40 +325,51 @@ class Coordinator(Behavior):
         logger.info(f"{self.agent_name} agent start - task_id {task_id}")
 
         import random
+
         use_model_a = random.choice([True, False])
 
         if use_model_a:
-            mcq_output = self.generator_a.action('generate_mcqs', parsed_output, file_path).result()
+            mcq_output = self.generator_a.action(
+                "generate_mcqs", parsed_output, file_path
+            ).result()
         else:
-            mcq_output = self.generator_b.action('generate_mcqs', parsed_output, file_path).result()
+            mcq_output = self.generator_b.action(
+                "generate_mcqs", parsed_output, file_path
+            ).result()
         # logger.info('MCQ Agent generated MCQs: %s', mcq_output)
 
-        selected_mcqs = self.selector.action('select_mcqs', mcq_output, n=3).result()
-        logger.info('Selected MCQs: %s', selected_mcqs)
+        selected_mcqs = self.selector.action("select_mcqs", mcq_output, n=3).result()
+        logger.info("Selected MCQs: %s", selected_mcqs)
 
-        answered_questions_a_fut = self.answerer_a.action('answer_mcqs', selected_mcqs)
-        answered_questions_b_fut = self.answerer_b.action('answer_mcqs', selected_mcqs)
-        
-        fut_a = self.scorer_b.action('score_answers', answered_questions_a_fut.result())
-        fut_b = self.scorer_a.action('score_answers', answered_questions_b_fut.result())
+        answered_questions_a_fut = self.answerer_a.action("answer_mcqs", selected_mcqs)
+        answered_questions_b_fut = self.answerer_b.action("answer_mcqs", selected_mcqs)
+
+        fut_a = self.scorer_b.action("score_answers", answered_questions_a_fut.result())
+        fut_b = self.scorer_a.action("score_answers", answered_questions_b_fut.result())
 
         scored_answers_a, scored_output_a = fut_a.result()
         scored_answers_b, scored_output_b = fut_b.result()
 
-        logger.info('Scored questions: A: %s B: %s', scored_answers_a, scored_answers_b)
+        logger.info("Scored questions: A: %s B: %s", scored_answers_a, scored_answers_b)
 
         avg_score_a = sum(scored_answers_a) / len(scored_answers_a)
         avg_score_b = sum(scored_answers_b) / len(scored_answers_b)
 
         # Now use the best model to answer all of the generated MCQs
-        selected_mcqs = self.selector.action('select_mcqs', mcq_output, n=len(mcq_output)).result()
+        selected_mcqs = self.selector.action(
+            "select_mcqs", mcq_output, n=len(mcq_output)
+        ).result()
 
         if avg_score_a >= avg_score_b:
             logger.info("Generating answers with A")
-            answered_questions = self.answerer_a.action('answer_mcqs', selected_mcqs).result()
+            answered_questions = self.answerer_a.action(
+                "answer_mcqs", selected_mcqs
+            ).result()
         else:
             logger.info("Generating answers with B")
-            answered_questions = self.answerer_b.action('answer_mcqs', selected_mcqs).result()
+            answered_questions = self.answerer_b.action(
+                "answer_mcqs", selected_mcqs
+            ).result()
 
         logger.info(f"{self.agent_name} agent end - task_id {task_id}")
         return answered_questions
@@ -330,23 +378,22 @@ class Coordinator(Behavior):
 def main() -> int:
     init_logging(logging.INFO)
 
-    model_a_name = 'alcf:mistralai/Mistral-7B-Instruct-v0.3'
-    model_b_name = 'alcf:meta-llama/Meta-Llama-3-70B-Instruct'
+    model_a_name = "alcf:mistralai/Mistral-7B-Instruct-v0.3"
+    model_b_name = "alcf:meta-llama/Meta-Llama-3-70B-Instruct"
 
-    with Manager(
-        exchange=ThreadExchange(),
-        launcher=ThreadLauncher(),
-    ) as manager:
+    with Manager(exchange=ThreadExchange(), launcher=ThreadLauncher(),) as manager:
         pdf_parser = PDFParser()
         mcq_generator_a = MCQGenerator(model_name=model_a_name)
         mcq_generator_b = MCQGenerator(model_name=model_b_name)
         mcq_selector = MCQSelector()
         mcq_answerer_a = MCQAnswerer(model_name=model_a_name)
         mcq_answerer_b = MCQAnswerer(model_name=model_b_name)
-        answer_scorer_a = AnswerScorer(model_a_name=model_a_name, 
-                                     model_b_name=model_b_name)
-        answer_scorer_b = AnswerScorer(model_a_name=model_b_name, 
-                                     model_b_name=model_a_name)
+        answer_scorer_a = AnswerScorer(
+            model_a_name=model_a_name, model_b_name=model_b_name
+        )
+        answer_scorer_b = AnswerScorer(
+            model_a_name=model_b_name, model_b_name=model_a_name
+        )
 
         parser_agent = manager.launch(pdf_parser)
         mcq_gen_a_agent = manager.launch(mcq_generator_a)
@@ -357,19 +404,31 @@ def main() -> int:
         answer_scorer_a_agent = manager.launch(answer_scorer_a)
         answer_scorer_b_agent = manager.launch(answer_scorer_b)
 
-        coordinator = manager.launch(Coordinator(mcq_gen_a_agent, mcq_gen_b_agent, 
-                                                 mcq_selector_agent, mcq_answerer_a_agent, mcq_answerer_b_agent, answer_scorer_a_agent, answer_scorer_b_agent))
+        coordinator = manager.launch(
+            Coordinator(
+                mcq_gen_a_agent,
+                mcq_gen_b_agent,
+                mcq_selector_agent,
+                mcq_answerer_a_agent,
+                mcq_answerer_b_agent,
+                answer_scorer_a_agent,
+                answer_scorer_b_agent,
+            )
+        )
 
         results = []
-        for x in range(1,11):
+        for x in range(1, 11):
             filename = f"example{x}.pdf"
-            parsed_output_fut = parser_agent.action('parse_pdf', filename)
-            results.append(coordinator.action('process', parsed_output_fut.result(), filename))
+            parsed_output_fut = parser_agent.action("parse_pdf", filename)
+            results.append(
+                coordinator.action("process", parsed_output_fut.result(), filename)
+            )
 
         for r in results:
-            logger.info('Scored questions: %s', r.result())
+            logger.info("Scored questions: %s", r.result())
 
     return 0
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     raise SystemExit(main())
