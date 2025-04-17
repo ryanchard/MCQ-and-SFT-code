@@ -41,8 +41,8 @@ class PDFParser(Behavior):
 
     @action
     def parse_pdf(self, file_path) -> str:
-
-        logger.info(f"TIMEINFO: {self.agent_name} agent start")
+        task_id = str(uuid.uuid4())[:8]
+        logger.info(f"TIMEINFO: {self.agent_name} agent start - task_id {task_id}")
 
         basename, _ = os.path.splitext(file_path)
         out_file = basename + ".json"
@@ -58,7 +58,7 @@ class PDFParser(Behavior):
         json_structure = [{'path': file_path, 'text': text, 'parser':parser}]
 
 
-        logger.info(f"TIMEINFO: {self.agent_name} agent end")
+        logger.info(f"TIMEINFO: {self.agent_name} agent end - task_id {task_id}")
 
         return json_structure
         # with open(out_path, 'w', encoding='utf-8') as out_f:
@@ -80,8 +80,8 @@ class MCQGenerator(Behavior):
 
     @action
     def generate_mcqs(self, parsed_input, file_path) -> str:
-
-        logger.info(f"TIMEINFO: {self.agent_name}-{self.model_name} agent start")
+        task_id = str(uuid.uuid4())[:8]
+        logger.info(f"TIMEINFO: {self.agent_name}-{self.model_name} agent start - task_id {task_id}")
 
         CHUNK_SIZE = 1000
         num_chunks = 0
@@ -113,7 +113,7 @@ class MCQGenerator(Behavior):
             #prompt_answer_pairs = {'hello': 'test'}
             self.all_prompt_answer_pairs.extend(prompt_answer_pairs)
 
-        logger.info(f"TIMEINFO: {self.agent_name}-{self.model_name} agent end")
+        logger.info(f"TIMEINFO: {self.agent_name}-{self.model_name} agent end - task_id {task_id}")
 
         return self.all_prompt_answer_pairs
         # out_file = f'mcqs_{file_path}'
@@ -133,7 +133,8 @@ class MCQSelector(Behavior):
 
     @action
     def select_mcqs(self, data, n=3) -> str:
-        logger.info(f"TIMEINFO: {self.agent_name} agent start")
+        task_id = str(uuid.uuid4())[:8]
+        logger.info(f"TIMEINFO: {self.agent_name} agent start - task_id {task_id}")
 
         # with open(input_file, 'r', encoding='utf-8') as infile:
         #     data = json.load(infile)
@@ -152,7 +153,7 @@ class MCQSelector(Behavior):
         # logger.info(f"Selected {n} random entries written to {output_file}")
 
         # return output_file
-        logger.info(f"TIMEINFO: {self.agent_name} agent end")
+        logger.info(f"TIMEINFO: {self.agent_name} agent end - task_id {task_id}")
         return selected_entries
     
 
@@ -169,6 +170,7 @@ class MCQAnswerer(Behavior):
 
     @action
     def answer_mcqs(self, data, start_num=0) -> str:
+        task_id = str(uuid.uuid4())[:8]
         # Load question-answer pairs
         # try:
         #     with open(input_file, "r", encoding="utf-8") as f:
@@ -177,7 +179,7 @@ class MCQAnswerer(Behavior):
         #     config.logger.error(f"ERROR: file {input_file} not found.")
         #     sys.exit(0)
 
-        logger.info(f"TIMEINFO: {self.agent_name}-{self.model_name} agent start")
+        logger.info(f"TIMEINFO: {self.agent_name}-{self.model_name} agent start - task_id {task_id}")
 
         qa_pairs = []
 
@@ -243,7 +245,7 @@ class MCQAnswerer(Behavior):
             # with open(output_path, 'a', encoding='utf-8') as out_f:
             #     out_f.write(json.dumps(new_tuple, ensure_ascii=False) + "\n")
         
-        logger.info(f"TIMEINFO: {self.agent_name}-{self.model_name} agent end")
+        logger.info(f"TIMEINFO: {self.agent_name}-{self.model_name} agent end - task_id {task_id}")
 
         return qa_pairs
         # return output_path
@@ -265,7 +267,8 @@ class AnswerScorer(Behavior):
 
     @action
     def score_answers(self, data) -> str:
-        logger.info(f"TIMEINFO: {self.agent_name}-{self.model_a_name}-{self.model_b_name} agent start")
+        task_id = str(uuid.uuid4())[:8]
+        logger.info(f"TIMEINFO: {self.agent_name}-{self.model_a_name}-{self.model_b_name} agent start - task_id {task_id}")
 
          # Load previously generated answers from modelA
         # answer_file = 'answers_'+self.model_a_name.replace('/', '+')+'.json'
@@ -337,7 +340,7 @@ class AnswerScorer(Behavior):
         else:
             print("No valid QA pairs found or no scores computed.")
 
-        logger.info(f"TIMEINFO: {self.agent_name}-{self.model_a_name}-{self.model_b_name} agent end")
+        logger.info(f"TIMEINFO: {self.agent_name}-{self.model_a_name}-{self.model_b_name} agent end - task_id {task_id}")
 
         return scores, qa_pairs
 
@@ -371,7 +374,8 @@ class Coordinator(Behavior):
         Generate a set of MCQs from the parsed text. Select a subset of MCQs and score the answers to them.
         Use the best model to answer all MCQs and return the result
         """
-        logger.info(f"{self.agent_name} agent start")
+        task_id = str(uuid.uuid4())[:8]
+        logger.info(f"{self.agent_name} agent start - task_id {task_id}")
 
         import random
         use_model_a = random.choice([True, False])
@@ -412,7 +416,7 @@ class Coordinator(Behavior):
             logger.info("Generating answers with B")
             answered_questions = self.answerer_b.action('answer_mcqs', selected_mcqs).result()
 
-        logger.info(f"{self.agent_name} agent end")
+        logger.info(f"{self.agent_name} agent end - task_id {task_id}")
         return answered_questions
 
 
