@@ -13,7 +13,6 @@ from concurrent.futures import Future
 
 from aeris.behavior import action
 from aeris.behavior import Behavior
-from aeris.behavior import loop
 from aeris.exchange.thread import ThreadExchange
 from aeris.launcher.thread import ThreadLauncher
 from aeris.logging import init_logging
@@ -23,7 +22,6 @@ import config
 
 from simple_parse import extract_text_from_pdf
 from generate_mcqs import split_text_into_chunks, generate_mcqs, NoOpTqdm
-# from select_mcqs_at_random import select_random_entries
 from model_access import Model
 from score_answers import score_answer
 
@@ -61,9 +59,6 @@ class PDFParser(Behavior):
         logger.info(f"TIMEINFO: {self.agent_name} agent end - task_id {task_id}")
 
         return json_structure
-        # with open(out_path, 'w', encoding='utf-8') as out_f:
-        #     json.dump(json_structure, out_f, ensure_ascii=False, indent=2)
-        # return out_file
 
 
 class MCQGenerator(Behavior):
@@ -85,25 +80,11 @@ class MCQGenerator(Behavior):
 
         CHUNK_SIZE = 1000
         num_chunks = 0
-        # with open(file_path, 'r', encoding='utf-8') as file:
-        #     if file_path.lower().endswith(".json"):
-        #         json_str = file.read()
-        #         lines = [json_str]
-        #     else:
-        #         lines = file.readlines()
-
-        # for record, key in enumerate(parsed_input, start=1):
         count = 0
-        # print(parsed_input)
+        
         for record in parsed_input:
-            # print(record)
             count += 1
-            # print(record)
-            # try:
-            #     record = json.loads(line.strip())
-            # except json.JSONDecodeError as e:
-            #     logger.info(f"JSON decode error in file {file_path} line {j}: {e}")
-
+        
             text = record['text']
             path = record['path']
             chunks = split_text_into_chunks(text, CHUNK_SIZE)
@@ -116,14 +97,6 @@ class MCQGenerator(Behavior):
         logger.info(f"TIMEINFO: {self.agent_name}-{self.model_name} agent end - task_id {task_id}")
 
         return self.all_prompt_answer_pairs
-        # out_file = f'mcqs_{file_path}'
-        # logger.info(f"Writing output to {out_file}")
-        # with open(out_file, 'w', encoding='utf-8') as out_f:
-        #     json.dump(self.all_prompt_answer_pairs, out_f, ensure_ascii=False, indent=2)
-
-        # return out_file
-
-
 
 
 class MCQSelector(Behavior):
@@ -136,23 +109,12 @@ class MCQSelector(Behavior):
         task_id = str(uuid.uuid4())[:8]
         logger.info(f"TIMEINFO: {self.agent_name} agent start - task_id {task_id}")
 
-        # with open(input_file, 'r', encoding='utf-8') as infile:
-        #     data = json.load(infile)
-
-        # Ensure there are enough entries to sample
         if n > len(data):
             raise ValueError(f"Requested {n} entries, but the file only contains {len(data)} entries.")
 
         # Randomly sample N entries without replacement
         selected_entries = random.sample(data, n)
 
-        # # Write the sampled entries to the output file
-        # with open(output_file, 'w', encoding='utf-8') as outfile:
-        #     json.dump(selected_entries, outfile, indent=4, ensure_ascii=False)
-
-        # logger.info(f"Selected {n} random entries written to {output_file}")
-
-        # return output_file
         logger.info(f"TIMEINFO: {self.agent_name} agent end - task_id {task_id}")
         return selected_entries
     
@@ -171,13 +133,6 @@ class MCQAnswerer(Behavior):
     @action
     def answer_mcqs(self, data, start_num=0) -> str:
         task_id = str(uuid.uuid4())[:8]
-        # Load question-answer pairs
-        # try:
-        #     with open(input_file, "r", encoding="utf-8") as f:
-        #         data = json.load(f)
-        # except:
-        #     config.logger.error(f"ERROR: file {input_file} not found.")
-        #     sys.exit(0)
 
         logger.info(f"TIMEINFO: {self.agent_name}-{self.model_name} agent start - task_id {task_id}")
 
@@ -191,19 +146,6 @@ class MCQAnswerer(Behavior):
         config.logger.info(f'Generating {len(data)} answers with model {self.model_name}')
 
         pbar = NoOpTqdm(total=len(data))
-
-        # Use JSON Lines file format, append each result immediately rather
-        # # than waiting to write everything at the end
-        # # Determine the output file name (changed extension to .jsonl).
-        # if int(start_num) == 0:
-        #     output_file = f'answers_{self.model_name.replace("/","+")}.json'
-        # # else:
-        # #     output_file = f'answers_{model_name.replace("/","+")}_{start_num}_{args.end}.jsonl'
-        # output_path = os.path.join('', output_file)
-
-        # # Remove existing output file if present; start fresh
-        # if os.path.exists(output_path):
-        #     os.remove(output_path)
 
         for (qa_pair, index) in zip(data, range(1, len(data) + 1)):
             question = qa_pair.get("question", "")
@@ -231,7 +173,6 @@ class MCQAnswerer(Behavior):
             start_time  = time.time()
             if index%10==0:
                 avg_time = total_time / index  # Average time per item so far
-                # config.logger.info(f'{index} ({avg_time:.2f} s)', end =' ', flush=True) 
 
             new_tuple = {'file':filename, 'filenum':filenum, 'chunknum':chunknum,
                         'gen_time': f'{gen_time:.3f}',
@@ -239,17 +180,9 @@ class MCQAnswerer(Behavior):
                         'model': model_answer}
             qa_pairs.append(new_tuple)
 
-
-            # Append the new result immediately to the output file.
-
-            # with open(output_path, 'a', encoding='utf-8') as out_f:
-            #     out_f.write(json.dumps(new_tuple, ensure_ascii=False) + "\n")
-        
         logger.info(f"TIMEINFO: {self.agent_name}-{self.model_name} agent end - task_id {task_id}")
 
         return qa_pairs
-        # return output_path
-
 
 
 class AnswerScorer(Behavior):
@@ -269,27 +202,6 @@ class AnswerScorer(Behavior):
     def score_answers(self, data) -> str:
         task_id = str(uuid.uuid4())[:8]
         logger.info(f"TIMEINFO: {self.agent_name}-{self.model_a_name}-{self.model_b_name} agent start - task_id {task_id}")
-
-         # Load previously generated answers from modelA
-        # answer_file = 'answers_'+self.model_a_name.replace('/', '+')+'.json'
-        # print(f'Looking for {answer_file}')
-        # if not os.path.exists(answer_file):
-        #     print(f'No answers file for {self.model_a_name}')
-        #     return ""
-
-        # score_file = f'scores_{self.model_a_name.replace("/","+")}={self.model_b_name.replace("/","+")}.json'
-        # # if os.path.exists(score_file) and not args.force:
-        # #     print('Score file already exists:', score_file)
-        # #     exit(1)
-
-        # logger.info(f"Writing scores to {score_file}")
-        # out_f = open(score_file, 'w', encoding='utf-8') 
-
-        # logger.info(f"Loading question-answer pairs from {answer_file}")
-        # # Load question-answer pairs
-        # with open(answer_file, "r", encoding="utf-8") as f:
-        #     data = [json.loads(line) for line in f]
-        #     # data = json.load(f)
 
         scores   = []
         qa_pairs = []
@@ -331,8 +243,6 @@ class AnswerScorer(Behavior):
                 avg_time = total_time / index  # Average time per item so far
                 avg_eval_time = eval_answer_total_time / index  # Average time per item so far
                 print(f'{index} ({avg_time:.2f})', end =' ', flush=True) 
-
-        # json.dump(qa_pairs, out_f, ensure_ascii=False, indent=2)
 
         if scores:
             mean_score = statistics.mean(scores)
@@ -392,9 +302,6 @@ class Coordinator(Behavior):
         answered_questions_a_fut = self.answerer_a.action('answer_mcqs', selected_mcqs)
         answered_questions_b_fut = self.answerer_b.action('answer_mcqs', selected_mcqs)
         
-        # logger.info('Answered questions A: %s', answered_questions_a)
-        # logger.info('Answered questions B: %s', answered_questions_b)
-
         fut_a = self.scorer_b.action('score_answers', answered_questions_a_fut.result())
         fut_b = self.scorer_a.action('score_answers', answered_questions_b_fut.result())
 
